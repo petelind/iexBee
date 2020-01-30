@@ -17,6 +17,13 @@ class Iex(object):
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
+    def __format__(self, format): 
+        # This funny thing is called list comprehension and is a damn fast iterator...
+        # Here is how it works: https://nyu-cds.github.io/python-performance-tips/08-loops/
+        return "\n".join(f"{s}"  for s in self.Symbols )
+        #                  ^ operand ^ subject  ^iterable 
+        # (collection or whatever is able to __iter()__)
+
     def get_stocks(self):
         """
         Will return all the stocks being traded on IEX.
@@ -24,7 +31,7 @@ class Iex(object):
         """
         try:
             # basically we create a market snapshot
-            uri = app.BASE_API_URL + 'ref-data/Iex/symbols/' + app.API_TOKEN
+            uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/{app.API_TOKEN}'
             self.stock_list = self.load_from_iex(uri)
             return self.stock_list
 
@@ -39,13 +46,13 @@ class Iex(object):
         :type uri: str with the endpoint to query
         :return Dict() with the answer from the endpoint, Exception otherwise
         """
-        self.Logger.info('Now retrieveing from ' + uri)
+        self.Logger.info(f'Now retrieveing from {uri}')
         response = requests.get(uri)
         if response.status_code == 200:
             company_info = json.loads(response.content.decode("utf-8"), parse_float=Decimal)
-            self.Logger.debug('Got response: ' + str(company_info))
+            self.Logger.debug(f'Got response: {company_info}')
             return company_info
         else:
             error = response.status_code
             self.Logger.error(
-                'Encountered an error: ' + str(error) + "(" + str(response.text) + ") while retrieving " + str(uri))
+                f'Encountered an error: {error} ( {response.text} ) while retrieving {uri}')
