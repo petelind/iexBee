@@ -8,13 +8,12 @@ import decimal
 import json
 
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
-API_TOKEN = '?token=' + os.getenv('API_TOKEN')
+API_TOKEN = f"?token={os.getenv('API_TOKEN')}"
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
 
 if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
-    API_TOKEN = '?token=Tsk_044123025bab4e5eb4p0e2daf0307824a'
 
 REGION = os.getenv('REGION')
 TABLE = os.getenv('TABLE')
