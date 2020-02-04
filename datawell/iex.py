@@ -14,6 +14,7 @@ class Iex(object):
         self.stock_list = []
         self.Logger = app.get_logger(__name__)
         self.Symbols = self.get_stocks()
+        #self.get_astats()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
@@ -23,6 +24,27 @@ class Iex(object):
         return "\n".join(f"{s}"  for s in self.Symbols )
         #                  ^ operand ^ subject  ^iterable 
         # (collection or whatever is able to __iter()__)
+
+    def get_astats(self, tickers: list = []):
+        """
+        Will return all the advanced stats for tickers or for all in self.Symbols
+        :return: True and populate self.Symbols with price to book, raises AppException if encountered an error
+        """
+        try:
+            self.Logger.debug(f'update stats for {tickers}')
+            for stock in self.Symbols:
+                if not tickers or stock.get('symbol') not in tickers:
+                    continue
+                uri = f'{app.BASE_API_URL}stock/{stock.get("symbol")}/advanced-stats/{app.API_TOKEN}'
+                result = self.load_from_iex(uri=uri)
+                self.Logger.debug(f'advanced stats for {stock.get("symbol")} is {result}')
+                stock.update(priceToBook=result.get('priceToBook'))
+            return True
+
+        except Exception as e:
+            message = 'Failed while retrieving advanced stats!'
+            ex = app.AppException(e, message)
+            raise ex
 
     def get_stocks(self):
         """
