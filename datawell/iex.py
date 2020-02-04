@@ -14,6 +14,7 @@ class Iex(object):
         self.stock_list = []
         self.Logger = app.get_logger(__name__)
         self.Symbols = self.get_stocks()
+        # Commented as it takes quite long time to get all the dividents sequentially
         #self.populate_dividends()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
@@ -55,7 +56,7 @@ class Iex(object):
             for company_info in self.Symbols:
                 company_symbol = company_info['symbol']
                 if ticker is None or company_symbol == ticker:
-                    uri = app.BASE_API_URL + f'stock/{company_symbol}/dividends/{period}' + app.API_TOKEN
+                    uri = f'{app.BASE_API_URL}stock/{company_symbol}/dividends/{period}{app.API_TOKEN}'
                     company_info['dividends'] = self.load_from_iex(uri)
         except Exception as e:
             message = f'Failed while retrieving dividends for ticker {ticker}!'
