@@ -38,8 +38,8 @@ class Iex(object):
             for stock in self.Symbols:
                 if not tickers or stock.get('symbol') not in tickers:
                     continue
-                uri = (f'{app.BASE_API_URL}',
-                       f'stock/{stock.get("symbol")}/',
+                uri = (f'{app.BASE_API_URL}'
+                       f'stock/{stock.get("symbol")}/'
                        f'advanced-stats/{app.API_TOKEN}')
                 result = self.load_from_iex(uri=uri)
                 self.Logger.debug(
