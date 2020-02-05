@@ -14,8 +14,10 @@ class Iex(object):
         self.stock_list = []
         self.Logger = app.get_logger(__name__)
         self.Symbols = self.get_stocks()
-        # now takes too long time
-        # self.get_astats()
+        # now takes too long time - that was the idea :)
+        self.get_astats()
+        # Commented as it takes quite long time to get all the dividents sequentially
+        self.populate_dividends()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
@@ -65,6 +67,27 @@ class Iex(object):
 
         except Exception as e:
             message = 'Failed while retrieving stock list!'
+            ex = app.AppException(e, message)
+            raise ex
+
+    def populate_dividends(self, ticker: str = None, period: str = '1y'):
+        """
+        Populates symbols with dividents info
+        :param ticker: str with ticker that should be populated, if None all the tickers are populated
+        :param period: str with period, 1y is default value
+        :return: Nothing
+        """
+        self.Logger.info("Populate symbols with dividents")
+        #TODO we might want to do that in parallel, but I am not sure if that is not part of optimization that should
+        #be done later
+        try:
+            for company_info in self.Symbols:
+                company_symbol = company_info['symbol']
+                if ticker is None or company_symbol == ticker:
+                    uri = f'{app.BASE_API_URL}stock/{company_symbol}/dividends/{period}{app.API_TOKEN}'
+                    company_info['dividends'] = self.load_from_iex(uri)
+        except Exception as e:
+            message = f'Failed while retrieving dividends for ticker {ticker}!'
             ex = app.AppException(e, message)
             raise ex
 
