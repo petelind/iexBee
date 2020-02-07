@@ -12,12 +12,13 @@ class Iex(object):
 
     def __init__(self):
         self.stock_list = []
+        self.dict_symbols={}
         self.Logger = app.get_logger(__name__)
         self.Symbols = self.get_stocks()
         # now takes too long time - that was the idea :)
-        self.get_astats()
+        #self.get_astats()
         # Commented as it takes quite long time to get all the dividents sequentially
-        self.populate_dividends()
+        #self.populate_dividends()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
@@ -105,7 +106,8 @@ class Iex(object):
             # basically we create a market snapshot
             uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/{app.API_TOKEN}'
             self.stock_list = self.load_from_iex(uri)
-            return self.stock_list
+            [self.dict_symbols.update({stock.pop("symbol"): {"symbol":stock}}) for stock in self.stock_list]
+            return self.dict_symbols
 
         except Exception as e:
             message = 'Failed while retrieving stock list!'
