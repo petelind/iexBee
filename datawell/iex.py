@@ -2,8 +2,8 @@
 Contains Iex class which retrieves information from IEX API
 """
 
-import json
 from decimal import Decimal
+from datetime import datetime, timedelta
 import requests
 import app
 
@@ -21,11 +21,13 @@ class Iex(object):
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
-    def __format__(self, format): 
-        # This funny thing is called list comprehension and is a damn fast iterator...
-        # Here is how it works: https://nyu-cds.github.io/python-performance-tips/08-loops/
-        return "\n".join(f"{s}"  for s in self.Symbols )
-        #                  ^ operand ^ subject  ^iterable 
+    def __format__(self, format):
+        # This funny thing is called list comprehension
+        #   and is a damn fast iterator...
+        # Here is how it works:
+        #   https://nyu-cds.github.io/python-performance-tips/08-loops/
+        return "\n".join(f"{s}" for s in self.Symbols or [])
+        #                  ^ operand ^ subject  ^iterable
         # (collection or whatever is able to __iter()__)
 
     def get_astats(self, tickers: list = []):
@@ -38,7 +40,7 @@ class Iex(object):
         try:
             self.Logger.debug(f'update stats for {tickers}')
             for stock in self.Symbols:
-                if not tickers or stock.get('symbol') not in tickers:
+                if tickers and stock.get('symbol') not in tickers:
                     continue
                 uri = (f'{app.BASE_API_URL}'
                        f'stock/{stock.get("symbol")}/'
@@ -96,7 +98,8 @@ class Iex(object):
     def get_stocks(self):
         """
         Will return all the stocks being traded on IEX.
-        :return: list of stock tickers and basic facts as list(), raises AppException if encountered an error
+        :return: list of stock tickers and basic facts as list(),
+            raises AppException if encountered an error
         """
         try:
             # basically we create a market snapshot
@@ -130,19 +133,25 @@ class Iex(object):
             ex = app.AppException(e, message)
             raise ex
 
+    @app.retry(app.AppException, logger=app.get_logger(__name__))
     def load_from_iex(self, uri: str):
         """
         Connects to the specified IEX endpoint and gets the data you requested.
         :type uri: str with the endpoint to query
         :return Dict() with the answer from the endpoint, Exception otherwise
         """
-        self.Logger.info(f'Now retrieveing from {uri}')
-        response = requests.get(uri)
-        if response.status_code == 200:
-            company_info = json.loads(response.content.decode("utf-8"), parse_float=Decimal)
+        try:
+            self.Logger.info(f'Now retrieveing from {uri}')
+            response = requests.get(uri)
+            response.raise_for_status()
+            company_info = response.json(parse_float=Decimal)
             self.Logger.debug(f'Got response: {company_info}')
             return company_info
-        else:
-            error = response.status_code
-            self.Logger.error(
-                f'Encountered an error: {error} ( {response.text} ) while retrieving {uri}')
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 429:
+                raise app.AppException(e, message="Too Many Requests")
+            else:
+                self.Logger.error(
+                    f'Encountered an error: {response.status_code}'
+                    f'( {response.text} ) while retrieving {uri}')
+                raise e
