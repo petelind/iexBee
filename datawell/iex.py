@@ -11,27 +11,20 @@ import app
 class Iex(object):
 
     def __init__(self):
-        self.stock_list = []
-        self.dict_symbols={}
+        self.dict_symbols = {}
         self.Logger = app.get_logger(__name__)
         self.Symbols = self.get_stocks()
         # now takes too long time - that was the idea :)
-        #self.get_astats()
-        # Commented as it takes quite long time to get all the dividents sequentially
-        #self.populate_dividends()
+        self.get_astats()
+        self.populate_dividends()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
     def __format__(self, format):
-        # This funny thing is called list comprehension
-        #   and is a damn fast iterator...
-        # Here is how it works:
-        #   https://nyu-cds.github.io/python-performance-tips/08-loops/
-        return "\n".join(f"{s}" for s in self.Symbols or [])
-        #                  ^ operand ^ subject  ^iterable
-        # (collection or whatever is able to __iter()__)
+        return "\n".join(f"symbol {s} with data {d}"
+                         for s, d in self.Symbols.items() or {})
 
-    def get_astats(self, tickers: list = []):
+    def get_astats(self, tickers: dict = {}):
         """
         Will return all the advanced stats for tickers
             or for all in self.Symbols
@@ -40,17 +33,16 @@ class Iex(object):
         """
         try:
             self.Logger.debug(f'update stats for {tickers}')
-            for stock in self.Symbols:
-                if tickers and stock.get('symbol') not in tickers:
-                    continue
+            upd = self.Symbols if not tickers else tickers
+            for stock, data in upd.items():
                 uri = (f'{app.BASE_API_URL}'
-                       f'stock/{stock.get("symbol")}/'
+                       f'stock/{stock}/'
                        f'advanced-stats/{app.API_TOKEN}')
                 result = self.load_from_iex(uri=uri)
                 self.Logger.debug(
-                    f'advanced stats for {stock.get("symbol")} is {result}')
-                stock.update(priceToBook=result.get('priceToBook'))
-            return True
+                    f'advanced stats for {stock} is {result}')
+                data.update(ADVANCED_STATS=result)
+            return upd
 
         except Exception as e:
             message = 'Failed while retrieving advanced stats!'
@@ -105,8 +97,8 @@ class Iex(object):
         try:
             # basically we create a market snapshot
             uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/{app.API_TOKEN}'
-            self.stock_list = self.load_from_iex(uri)
-            [self.dict_symbols.update({stock.pop("symbol"): {"symbol":stock}}) for stock in self.stock_list]
+            [self.dict_symbols.update({stock.pop("symbol"): {"symbol": stock}})
+             for stock in self.load_from_iex(uri)]
             return self.dict_symbols
 
         except Exception as e:
