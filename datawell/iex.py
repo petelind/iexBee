@@ -17,6 +17,7 @@ class Iex(object):
         # now takes too long time - that was the idea :)
         self.get_astats()
         self.populate_dividends()
+        self.get_company()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
@@ -49,7 +50,7 @@ class Iex(object):
             ex = app.AppException(e, message)
             raise ex
 
-    def get_books(self,*symbols):
+    def get_books(self, *symbols):
         """
         The method for IEX populates BOOK data either for all stocks (if no ticker given) or a particular stock (if ticker given).
         After method call, particular ticker has a dict added to it with data returned by the call.
@@ -70,15 +71,15 @@ class Iex(object):
                         }) for symbol in self.Symbols]
                 self.Logger.info("All symbols have been updated with BOOK data.")
             else:
-                #Check if there are not existing symbols among inpput parameters:
+                # Check if there are not existing symbols among inpput parameters:
                 [self.Logger.warning(f'There is no {symbol} symbol among IEX Symbols list.')
                 for symbol in symbols
                 if not any(
                     Symbol['symbol'] == symbol for Symbol in self.Symbols
                     )]
-                #Update all existing tinkers with BOOK data:
+                # Update all existing tinkers with BOOK data:
                 [Symbol.update({
-                    'BOOK': 
+                    'BOOK':
                     (self.load_from_iex(f'{app.BASE_API_URL}stock/{symbol}/book/{app.API_TOKEN}'))
                     }) for Symbol in self.Symbols
                     for symbol in symbols
@@ -114,8 +115,8 @@ class Iex(object):
         :return: Nothing
         """
         self.Logger.info("Populate symbols with dividents")
-        #TODO we might want to do that in parallel, but I am not sure if that is not part of optimization that should
-        #be done later
+        # TODO we might want to do that in parallel, but I am not sure if that is not part of optimization that should
+        # be done later
         try:
             for company_info in self.Symbols:
                 company_symbol = company_info['symbol']
@@ -124,6 +125,27 @@ class Iex(object):
                     company_info['dividends'] = self.load_from_iex(uri)
         except Exception as e:
             message = f'Failed while retrieving dividends for ticker {ticker}!'
+            ex = app.AppException(e, message)
+            raise ex
+
+    def get_company(self, Symbols: dict = {}):
+        """
+        Will return companies according to the stocks or all stocks.
+        https://github.com/petelind/ConsumingAPI/issues/2
+        """
+# if noone symbol is not provided, default set of symbols(all) will be used
+        Symbols = self.Symbols if not Symbols else Symbols
+        try:
+            # company_list = []
+            for symbol, symbol_data in Symbols.items():
+                self.Logger.debug(f'Update {symbol} symbol with company info.')
+                uri = f'{app.BASE_API_URL}stock/{symbol}/company{app.API_TOKEN}'
+                company_info = self.load_from_iex(uri)
+            # poppulate with company info
+                symbol_data.update(company=company_info)
+            return Symbols
+        except Exception as e:
+            message = 'Failed while retrieving companies!'
             ex = app.AppException(e, message)
             raise ex
 
