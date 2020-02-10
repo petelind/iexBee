@@ -18,6 +18,7 @@ class Iex(object):
         self.get_astats()
         self.populate_dividends()
         self.get_company()
+        self.get_financials()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
@@ -148,6 +149,32 @@ class Iex(object):
             message = 'Failed while retrieving companies!'
             ex = app.AppException(e, message)
             raise ex
+
+    def get_financials(self, symbols: dict = {}):
+        """
+        Will return financials data (either all, or for given ticker).
+        :type symbols: company symbols data structure to get financials for
+        :return: symbols data structure updated with financials
+        """
+
+        symbols = self.Symbols if not symbols else symbols
+        self.Logger.info("Populate symbols with financials")
+        for symbol, symbol_data in symbols.items():
+            try:
+                self.Logger.debug(f'Updating {symbol} symbol with financials.')
+                uri = f'{app.BASE_API_URL}stock/{symbol}/financials/{app.API_TOKEN}'
+                symbol_data.update(financials=self.load_from_iex(uri)["financials"])
+
+            except KeyError:
+                # Some symbols don't have financial info associated, so skipping
+                continue
+
+            except Exception as e:
+                message = 'Failed while retrieving financials!'
+                ex = app.AppException(e, message)
+                raise ex
+
+        return symbols
 
     @app.retry(app.AppException, logger=app.get_logger(__name__))
     def load_from_iex(self, uri: str):
