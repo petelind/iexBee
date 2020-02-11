@@ -1,0 +1,25 @@
+{
+  "symbol": "AEB",
+  "companyName": "AEGON NV",
+  "exchange": "New York Stock Exchange",
+  "industry": "Multi-Line Insurance",
+  "website": "http://www.aegon.com",
+  "description": "Aegon N.V. is a holding company, which engages in the provision of insurance, pensions, and asset management services. It operates through the following segments: Americas; Europe; Asia; Asset management; and Holding and Other Activities. The Americas segment covers business units in the United States, Brazil and Mexico, including any of the units activities located outside these countries. The Europe segment covers the Netherlands, United Kingdom including Variable Annuities Europe, Central & Eastern Europe, Spain, and Portugal. Asia segment is responsible for Hong Kong, Singapore, China, Japan, India, and Indonesia including any of the units activities located outside these countries. The Asset Management segment relates to business activities from Aegon Asset Management. The Holding and Other Activities segment includes financing, reinsurance activities, employee and other administrative expenses of holding companies. The company was founded in 1844 and is headquartered in The Hague, the Netherlands.",
+  "CEO": "Alexander Rijn Wynaendts",
+  "securityName": "Aegon N.V. Floating Rate Perpetual Capital Security 2005 Without fixed maturity",
+  "issueType": "ps",
+  "sector": "Finance",
+  "primarySicCode": 6399,
+  "employees": null,
+  "tags": [
+    "Finance",
+    "Multi-Line Insurance"
+  ],
+  "address": "Aegonplein 50",
+  "address2": null,
+  "state": "Zuid-Holland",
+  "city": "The Hague",
+  "zip": "2591",
+  "country": "NL",
+  "phone": "31.70.344.32.10"
+}
