@@ -139,11 +139,11 @@ class Iex(object):
 
         symbols = self.Symbols if not symbols else symbols
         self.Logger.info("Populate symbols with financials")
-        for symbol, symbol_data in symbols.items():
+        for symbol, data in symbols.items():
             try:
                 self.Logger.debug(f'Updating {symbol} symbol with financials.')
                 uri = f'{app.BASE_API_URL}stock/{symbol}/financials/{app.API_TOKEN}'
-                symbol_data.update(financials=self.load_from_iex(uri)["financials"])
+                data["financials"] = self.load_from_iex(uri)["financials"]
 
             except KeyError:
                 # Some symbols don't have financial info associated, so skipping
