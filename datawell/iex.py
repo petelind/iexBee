@@ -19,6 +19,7 @@ class Iex(object):
         self.populate_dividends()
         self.get_company()
         self.get_financials()
+        self.get_books()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
@@ -51,42 +52,25 @@ class Iex(object):
             ex = app.AppException(e, message)
             raise ex
 
-    def get_books(self, *symbols):
+    def get_books(self, symbols: dict = {}):
         """
-        The method for IEX populates BOOK data either for all stocks (if no ticker given) or a particular stock (if ticker given).
-        After method call, particular ticker has a dict added to it with data returned by the call.
-        Here is API endpoint data: https://iexcloud.io/docs/api/#book
-        _________________________________________
-        The method updates existing self.Symbols list with retrieved BOOK data.
+        The method for IEX populates BOOK data either for all stocks (if no
+        ticker given) or a particular stock (if ticker given). The method
+        updates existing self.Symbols list with retrieved BOOK data. Here
+        is API endpoint data: https://iexcloud.io/docs/api/#book
         """
         try:
-            symbols = set(symbols)
-            if len(symbols) == 0:
-                self.Logger.info("No symbols have been provided to get BOOK data. All symbols will be used to call BOOK data.")
-                if(len(self.Symbols) == 0):
-                    self.Logger.warning("Nothing to update. Symbols List is blank.")
-                else:
-                    [symbol.update({
-                        'BOOK':
-                        (self.load_from_iex(f'{app.BASE_API_URL}stock/{symbol.get("symbol")}/book/{app.API_TOKEN}'))
-                        }) for symbol in self.Symbols]
-                self.Logger.info("All symbols have been updated with BOOK data.")
-            else:
-                # Check if there are not existing symbols among inpput parameters:
-                [self.Logger.warning(f'There is no {symbol} symbol among IEX Symbols list.')
-                for symbol in symbols
-                if not any(
-                    Symbol['symbol'] == symbol for Symbol in self.Symbols
-                    )]
-                # Update all existing tinkers with BOOK data:
-                [Symbol.update({
-                    'BOOK':
-                    (self.load_from_iex(f'{app.BASE_API_URL}stock/{symbol}/book/{app.API_TOKEN}'))
-                    }) for Symbol in self.Symbols
-                    for symbol in symbols
-                    if Symbol.get('symbol') == symbol]
+            symbols = self.Symbols if not symbols else symbols
+            self.Logger.info("Populate symbols with book data.")
+            [
+                symbol_data.update(
+                  book=self.load_from_iex(
+                    f'{app.BASE_API_URL}stock/{symbol}/book/{app.API_TOKEN}'
+                  )
+                ) for symbol, symbol_data in symbols.items()
+            ]
         except Exception as e:
-            message = 'Failed while retrieving BOOKS list!'
+            message = 'Failed while retrieving books list!'
             ex = app.AppException(e, message)
             raise ex
 
