@@ -3,7 +3,6 @@ Contains Iex class which retrieves information from IEX API
 """
 
 from decimal import Decimal
-from datetime import datetime, timedelta
 import requests
 import app
 
@@ -44,7 +43,7 @@ class Iex(object):
                 result = self.load_from_iex(uri=uri)
                 self.Logger.debug(
                     f'advanced stats for {stock} is {result}')
-                data.update(ADVANCED_STATS=result)
+                data['advanced-stats'] = result
             return upd
 
         except Exception as e:
@@ -83,8 +82,7 @@ class Iex(object):
         try:
             # basically we create a market snapshot
             uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/{app.API_TOKEN}'
-            [self.dict_symbols.update({stock.pop("symbol"): {"symbol": stock}})
-             for stock in self.load_from_iex(uri)]
+            [self.dict_symbols.update({stock.get("symbol"): stock}) for stock in self.load_from_iex(uri)]
             return self.dict_symbols
 
         except Exception as e:
@@ -92,24 +90,22 @@ class Iex(object):
             ex = app.AppException(e, message)
             raise ex
 
-    def populate_dividends(self, ticker: str = None, period: str = '1y'):
+    def populate_dividends(self, tickers: dict = {}, period: str = '1y'):
         """
         Populates symbols with dividents info
-        :param ticker: str with ticker that should be populated, if None all the tickers are populated
+        :param tickers: list with tickers that should be populated, if None all the tickers are populated
         :param period: str with period, 1y is default value
         :return: Nothing
         """
         self.Logger.info("Populate symbols with dividents")
-        # TODO we might want to do that in parallel, but I am not sure if that is not part of optimization that should
-        # be done later
         try:
-            for company_info in self.Symbols:
-                company_symbol = company_info['symbol']
-                if ticker is None or company_symbol == ticker:
-                    uri = f'{app.BASE_API_URL}stock/{company_symbol}/dividends/{period}{app.API_TOKEN}'
-                    company_info['dividends'] = self.load_from_iex(uri)
+            self.Logger.debug(f'update stats for {tickers}')
+            upd = self.Symbols if not tickers else tickers
+            for stock, data in upd.items():
+                uri = f'{app.BASE_API_URL}stock/{stock}/dividends/{period}{app.API_TOKEN}'
+                data['dividends'] = self.load_from_iex(uri)
         except Exception as e:
-            message = f'Failed while retrieving dividends for ticker {ticker}!'
+            message = f'Failed while retrieving dividends for tickers {tickers}!'
             ex = app.AppException(e, message)
             raise ex
 
@@ -118,7 +114,7 @@ class Iex(object):
         Will return companies according to the stocks or all stocks.
         https://github.com/petelind/ConsumingAPI/issues/2
         """
-# if noone symbol is not provided, default set of symbols(all) will be used
+        # if noone symbol is not provided, default set of symbols(all) will be used
         Symbols = self.Symbols if not Symbols else Symbols
         try:
             # company_list = []
