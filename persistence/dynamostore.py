@@ -57,6 +57,20 @@ class DynamoStore:
         :param symbols_to_remove: list of dicts each containing 'symbol' string
         :returns: number of the elements removed as int, 0 if not found, AppException if AWS Error: No access etc
         """
+        if symbols_to_remove:
+            for symbol in symbols_to_remove:
+                self._delete_one_item(symbol)
+        else:
+            all_companies: dict = self.table.scan().get("Items", [])
+            for company in all_companies:
+                self._delete_one_item(company["symbol"])
+
+    def _delete_one_item(self, company):
+        self.table.delete_item(
+            Key={
+                "symbol": company
+            }
+        )
 
     def remove_empty_strings(dict_to_clean: dict):
         """
