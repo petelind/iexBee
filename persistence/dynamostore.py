@@ -6,14 +6,15 @@ import app
 class DynamoStore:
     def __init__(self, table_name: str):
         self.Logger = app.get_logger(__name__)
-        self.dynamodb_client = boto3.client("dynamodb", region_name=app.REGION)
-
+        self.dynamodb = boto3.resource("dynamodb",
+                                       region_name=app.REGION,
+                                       endpoint_url=app.DYNAMO_URI)
         try:
-            self.dynamodb_client.describe_table(TableName=table_name)
+            self.dynamo_table = self.dynamodb.Table(table_name)
 
-        except self.dynamodb_client.exceptions.ResourceNotFoundException:
+        except self.dynamodb.exceptions.ResourceNotFoundException:
             self.Logger.info(f'DynamoDB table {table_name} doesn\'t exist, creating...')
-            self.dynamodb_client.create_table(
+            self.dynamodb.create_table(
                 TableName=table_name,
                 AttributeDefinitions=[
                     {
@@ -32,14 +33,21 @@ class DynamoStore:
                     'WriteCapacityUnits': 5,
                 },
             )
-
+            self.dynamo_table = self.dynamodb.Table(table_name)
 
     def store_documents(self, documents: list):
         """
         Persists list of dict() provided into the Dynamo table of the repo
         :param documents:
-        :return: ActionStatus with SUCCESS when stored successfully, ERROR if failed, AppException if AWS Error: No access etc
+        :return: ActionStatus with SUCCESS when stored successfully,
+            ERROR if failed, AppException if AWS Error: No access etc
         """
+        self.Logger.info(f'Writing into dynamodb')
+        with self.dynamo_table.batch_writer() as batch:
+            for r in documents:
+                self.Logger.debug(f'put into dynamodb {r}')
+                batch.put_item(Item=r)
+        return True
 
     def clean_table(self, symbols_to_remove: list):
         """

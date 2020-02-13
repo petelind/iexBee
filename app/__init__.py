@@ -13,6 +13,7 @@ BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
 API_TOKEN = f"?token={os.getenv('API_TOKEN')}"
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
+DYNAMO_URI = os.getenv('DYNAMO_URI', None)
 
 if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
