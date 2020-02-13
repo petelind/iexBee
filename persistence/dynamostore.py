@@ -1,30 +1,33 @@
 from datetime import datetime
 import boto3
+from botocore.exceptions import ClientError
 import app
-
 
 class DynamoStore:
     def __init__(self, table_name: str):
         self.Logger = app.get_logger(__name__)
-        self.dynamodb = boto3.resource("dynamodb",
-                                       region_name=app.REGION,
-                                       endpoint_url=app.DYNAMO_URI)
+        self.dynamo = boto3.resource(
+            "dynamodb",
+            region_name=app.REGION,
+            endpoint_url=app.DYNAMO_URI)
+        self.table = self.dynamo.Table(table_name)
         try:
-            self.dynamo_table = self.dynamodb.Table(table_name)
-
-        except self.dynamodb.exceptions.ResourceNotFoundException:
-            self.Logger.info(f'DynamoDB table {table_name} doesn\'t exist, creating...')
-            self.dynamodb.create_table(
+            self.table.table_status in (
+                "CREATING", "UPDATING", "DELETING", "ACTIVE")
+        except ClientError:
+            self.Logger.info(f'DynamoDB table {table_name} doesn\'t exist,'
+                             'creating...')
+            self.dynamo.create_table(
                 TableName=table_name,
                 AttributeDefinitions=[
                     {
-                        'AttributeName': 'Symbol',
+                        'AttributeName': 'symbol',
                         'AttributeType': 'S',
                     }
                 ],
                 KeySchema=[
                     {
-                        'AttributeName': 'Symbol',
+                        'AttributeName': 'symbol',
                         'KeyType': 'HASH',
                     },
                 ],
@@ -33,7 +36,6 @@ class DynamoStore:
                     'WriteCapacityUnits': 5,
                 },
             )
-            self.dynamo_table = self.dynamodb.Table(table_name)
 
     def store_documents(self, documents: list):
         """
@@ -43,7 +45,7 @@ class DynamoStore:
             ERROR if failed, AppException if AWS Error: No access etc
         """
         self.Logger.info(f'Writing into dynamodb')
-        with self.dynamo_table.batch_writer() as batch:
+        with self.table.batch_writer() as batch:
             for r in documents:
                 self.Logger.debug(f'put into dynamodb {r}')
                 batch.put_item(Item=r)
