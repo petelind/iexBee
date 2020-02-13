@@ -46,17 +46,21 @@ class TestDynamoStore(TestCase):
 
     def test_store_documents_PassValidDocs_ExpectThemAppearInDB(self):
         # ARRANGE
-        with open('AEB.response.json', mode='r') as doc:
+        symbol_to_load = 'AEB'
+        with open(f'{symbol_to_load}.response.json', mode='r') as doc:
             serialized_doc = json.load(doc)
+        self.assertFalse(self.item_exists(symbol_to_load),
+                         'Item should exist before the deletion')
 
         # ACT:
         self.dynamo_store.store_documents([serialized_doc])
         get_it_back = dynamo_db_table.query(
-            KeyConditionExpression=Key('symbol').eq('AEB')
+            KeyConditionExpression=Key('symbol').eq(symbol_to_load)
         )['Items'][0]
 
         # ASSERT:
-        self.assertDictEqual(get_it_back, serialized_doc)
+        self.assertDictEqual(get_it_back, serialized_doc,
+                             'Stored document not equal')
 
 
     def test_clean_table_PassListWithOneExistingSymbol_ExpectSymbolDeletedFromDB(self):
