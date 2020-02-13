@@ -45,17 +45,19 @@ class TestDynamoStore(TestCase):
             )
 
     def test_store_documents_PassValidDocs_ExpectThemAppearInDB(self):
-        # ARRANGE:
-        json_string = json.dumps(self.serialized_doc)
+        # ARRANGE
+        with open('AEB.response.json', mode='r') as doc:
+            serialized_doc = json.load(doc)
 
         # ACT:
-        get_it_back = json.loads(json_string)
+        self.dynamo_store.store_documents([serialized_doc])
+        get_it_back = dynamo_db_table.query(
+            KeyConditionExpression=Key('symbol').eq('AEB')
+        )['Items'][0]
 
         # ASSERT:
-        self.assertDictEqual(get_it_back, self.serialized_doc)
-        # word of caution assertItemsEqual() - intermittent failures with lists and ordered dicts
-        # self.assertDictEqual()
-        # self.assertRaises()
+        self.assertDictEqual(get_it_back, serialized_doc)
+
 
     def test_clean_table_PassListWithOneExistingSymbol_ExpectSymbolDeletedFromDB(self):
         # ARRANGE:
