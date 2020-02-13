@@ -1,9 +1,38 @@
 from datetime import datetime
+import boto3
+import app
 
 
 class DynamoStore:
-    def __init__(self):
-        pass
+    def __init__(self, table_name: str):
+        self.Logger = app.get_logger(__name__)
+        self.dynamodb_client = boto3.client("dynamodb", region_name=app.REGION)
+
+        try:
+            self.dynamodb_client.describe_table(TableName=table_name)
+
+        except self.dynamodb_client.exceptions.ResourceNotFoundException:
+            self.Logger.info(f'DynamoDB table {table_name} doesn\'t exist, creating...')
+            self.dynamodb_client.create_table(
+                TableName=table_name,
+                AttributeDefinitions=[
+                    {
+                        'AttributeName': 'Symbol',
+                        'AttributeType': 'S',
+                    }
+                ],
+                KeySchema=[
+                    {
+                        'AttributeName': 'Symbol',
+                        'KeyType': 'HASH',
+                    },
+                ],
+                ProvisionedThroughput={
+                    'ReadCapacityUnits': 5,
+                    'WriteCapacityUnits': 5,
+                },
+            )
+
 
     def store_documents(self, documents: list):
         """
