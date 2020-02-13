@@ -1,5 +1,6 @@
 import boto3
 import app
+from boto3.dynamodb.conditions import Key
 
 table_name = 'CompaniesIntegrationTesting'
 
