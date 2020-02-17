@@ -2,6 +2,8 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 import app
+from collections.abc import MutableMapping
+
 
 class DynamoStore:
     def __init__(self, table_name: str):
@@ -74,10 +76,43 @@ class DynamoStore:
 
     def remove_empty_strings(dict_to_clean: dict):
         """
-        Removes all the empty key+value pairs from the dict you give it; use to clean up dicts before persisting them to the DynamoDB
+        The method removes all the empty key+value pairs from the dict
+        you give it. The method is used to clean up dicts before
+        persisting them to the DynamoDB.
         :param dict_to_clean: as dict()
         :return: only non-empty key+value pairs from the source dict as dict()
         """
+
+        # Function to search in nested list:
+        def delete_from_list(some_list):
+            modified_list = []
+            for value in some_list:
+                if value or value is False or value == 0:
+                    if isinstance(value, MutableMapping):
+                        a = delete_keys_from_dict(value)
+                        if a:
+                            modified_list.append(a)
+                    elif isinstance(value, list):
+                        modified_list.append(delete_from_list(value))
+                    else:
+                        modified_list.append(value)
+            return modified_list
+
+        # Function to search in nested dict:
+        def delete_keys_from_dict(dictionary):
+            modified_dict = {}
+            for key, value in dictionary.items():
+                if value or value is False or value == 0:
+                    if isinstance(value, MutableMapping):
+                        modified_dict[key] = delete_keys_from_dict(value)
+                    elif isinstance(value, list):
+                        modified_dict[key] = delete_from_list(value)
+                    else:
+                        modified_dict[key] = value
+            return modified_dict
+
+        res_dict = delete_keys_from_dict(dict_to_clean)
+        return(res_dict)
 
     def get_filtered_documents(self, symbol_to_find: str = None, target_date: datetime.date = None):
         """
