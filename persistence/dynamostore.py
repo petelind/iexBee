@@ -83,36 +83,43 @@ class DynamoStore:
         :return: only non-empty key+value pairs from the source dict as dict()
         """
 
-        # Function to search in nested list:
-        def delete_from_list(some_list):
-            modified_list = []
-            for value in some_list:
-                if value or value is False or value == 0:
-                    if isinstance(value, MutableMapping):
-                        a = delete_keys_from_dict(value)
-                        if a:
-                            modified_list.append(a)
-                    elif isinstance(value, list):
-                        modified_list.append(delete_from_list(value))
-                    else:
-                        modified_list.append(value)
-            return modified_list
+        try:
 
-        # Function to search in nested dict:
-        def delete_keys_from_dict(dictionary):
-            modified_dict = {}
-            for key, value in dictionary.items():
-                if value or value is False or value == 0:
-                    if isinstance(value, MutableMapping):
-                        modified_dict[key] = delete_keys_from_dict(value)
-                    elif isinstance(value, list):
-                        modified_dict[key] = delete_from_list(value)
-                    else:
-                        modified_dict[key] = value
-            return modified_dict
+            # Function to search in nested list:
+            def delete_from_list(some_list):
+                modified_list = []
+                for value in some_list:
+                    if value or value is False or value == 0:
+                        if isinstance(value, MutableMapping):
+                            a = delete_keys_from_dict(value)
+                            if a:
+                                modified_list.append(a)
+                        elif isinstance(value, list):
+                            modified_list.append(delete_from_list(value))
+                        else:
+                            modified_list.append(value)
+                return modified_list
 
-        res_dict = delete_keys_from_dict(dict_to_clean)
-        return(res_dict)
+            # Function to search in nested dict:
+            def delete_keys_from_dict(dictionary):
+                modified_dict = {}
+                for key, value in dictionary.items():
+                    if value or value is False or value == 0:
+                        if isinstance(value, MutableMapping):
+                            modified_dict[key] = delete_keys_from_dict(value)
+                        elif isinstance(value, list):
+                            modified_dict[key] = delete_from_list(value)
+                        else:
+                            modified_dict[key] = value
+                return modified_dict
+
+            res_dict = delete_keys_from_dict(dict_to_clean)
+            return(res_dict)
+
+        except Exception as e:
+            message = 'Failed while cleaning dict for key-value empty pairs!'
+            ex = app.AppException(e, message)
+            raise ex
 
     def get_filtered_documents(self, symbol_to_find: str = None, target_date: datetime.date = None):
         """
