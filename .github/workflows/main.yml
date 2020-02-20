@@ -1,0 +1,24 @@
+name: CI
+
+on: [push]
+
+jobs:
+  golang-job:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.8-alpine
+    services:
+      localstack:
+        image: localstack/localstack:0.10.7
+        env:
+          SERVICES: dynamodb
+    steps:
+      - name: checkout
+        uses: actions/checkout@v1
+      - name: setup
+        run: |
+          mkdir -p ~/.aws
+          pip install -r requirements.txt
+          pip install unittest
+      - name: tests
+        run: python -m pytest -v tests

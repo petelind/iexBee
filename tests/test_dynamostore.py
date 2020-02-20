@@ -1,16 +1,18 @@
 import decimal
 import json
 from unittest import TestCase
-from persistence import *
-
 from persistence.dynamostore import DynamoStore
+from boto3.dynamodb.conditions import Key
+import boto3
+import app
 
+table_name = 'CompaniesIntegrationTesting'
+dynamo_db_client = boto3.client('dynamodb', endpoint_url=app.DYNAMO_URI)
+dynamo_db_resource = boto3.resource('dynamodb', endpoint_url=app.DYNAMO_URI)
+dynamo_db_table = dynamo_db_resource.Table(table_name)
+dynamo_store = DynamoStore(table_name=table_name)
 
 class TestDynamoStore(TestCase):
-
-    def __init__(self, *args, **kwargs):
-        super(TestDynamoStore, self).__init__(*args, **kwargs)
-        self.dynamo_store = DynamoStore(table_name=table_name)
 
     @classmethod
     def setUpClass(cls):
@@ -27,14 +29,6 @@ class TestDynamoStore(TestCase):
     def tearDownClass(cls):
         dynamo_db_table.delete()
 
-    def setUp(self) -> None:
-        """
-        This is is your plain old tearUp()
-        :return: Nothing, but all the objects created here will be accessible by all other methods
-        """
-        with open('AEB.response.json') as file:
-            self.serialized_doc = json.load(file)
-
     def tearDown(self) -> None:
         all_companies: dict = dynamo_db_table.scan().get("Items", [])
         for company in all_companies:
@@ -47,13 +41,13 @@ class TestDynamoStore(TestCase):
     def test_store_documents_PassValidDocs_ExpectThemAppearInDB(self):
         # ARRANGE
         symbol_to_load = 'AEB'
-        with open(f'{symbol_to_load}.response.json', mode='r') as doc:
-            serialized_doc = json.load(doc)
+        with open(f'tests/fixtures/{symbol_to_load}.response.json', mode='r') as company_file:
+            serialized_doc = json.load(company_file, parse_float=decimal.Decimal)
         self.assertFalse(self.item_exists(symbol_to_load),
                          'Item should exist before the deletion')
 
         # ACT:
-        self.dynamo_store.store_documents([serialized_doc])
+        dynamo_store.store_documents([serialized_doc])
         get_it_back = dynamo_db_table.query(
             KeyConditionExpression=Key('symbol').eq(symbol_to_load)
         )['Items'][0]
@@ -71,7 +65,7 @@ class TestDynamoStore(TestCase):
         assert self.item_exists(symbol_to_be_deleted), 'Item should exist before the deletion'
 
         # ACT
-        self.dynamo_store.clean_table(symbols_to_remove=[symbol_to_be_deleted])
+        dynamo_store.clean_table(symbols_to_remove=[symbol_to_be_deleted])
 
         # ASSERT
         result_count = self.get_number_of_items_in_table()
@@ -87,7 +81,7 @@ class TestDynamoStore(TestCase):
         for symbol in symbols_to_be_deleted:
             assert self.item_exists(symbol), f'Item {symbol} should exist before the deletion'
         # ACT
-        self.dynamo_store.clean_table(symbols_to_remove=symbols_to_be_deleted)
+        dynamo_store.clean_table(symbols_to_remove=symbols_to_be_deleted)
 
         # ASSERT
         result_count = self.get_number_of_items_in_table()
@@ -101,14 +95,14 @@ class TestDynamoStore(TestCase):
         self.load_companies('companies_dump.json')
 
         # ACT
-        self.dynamo_store.clean_table(symbols_to_remove=[])
+        dynamo_store.clean_table(symbols_to_remove=[])
 
         # ASSERT
         result_count = self.get_number_of_items_in_table()
         self.assertEqual(result_count, 0, f'Add items should be deleted')
 
     def load_companies(self, file: str):
-        with open(file, mode='r') as companies_file:
+        with open('tests/fixtures/companies_dump.json', mode='r') as companies_file:
             companies = json.load(companies_file, parse_float=decimal.Decimal)
         for company in companies.values():
             dynamo_db_table.put_item(Item=company)

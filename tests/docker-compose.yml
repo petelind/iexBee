@@ -1,0 +1,20 @@
+version: '2'
+services:
+  tests:
+    build:
+      context: ..
+      dockerfile: tests/Dockerfile
+    command: python -m pytest -v tests
+    environment:
+      DYNAMO_URI: http://localstack:4569
+      TEST_ENVIRONMENT: 'true'
+    working_dir: /app/
+    volumes:
+      - ..:/app
+  localstack:
+    image: localstack/localstack:0.10.7
+    ports: 
+      - 4567-4599:4567-4599
+      - 8080:8080
+    environment:
+      SERVICES: dynamodb
