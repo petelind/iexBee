@@ -26,3 +26,4 @@ jobs:
         run: python -m pytest -v tests
         env: 
           DYNAMO_URI: http://localhost:4569
+          AWS_REGION: us-east-1
