@@ -3,6 +3,7 @@ import boto3
 from botocore.exceptions import ClientError
 import app
 from collections.abc import MutableMapping
+from boto3.dynamodb.conditions import Key
 
 
 class DynamoStore:
@@ -125,6 +126,33 @@ class DynamoStore:
         """
         Returns a list of documents matching given ticker and/or date
         :param symbol_to_find: ticker as a string
-        :param target_date: desired date as a datetime.date, leave empty to get for all available dates
-        :return: a list of dicts() each containing data available for a stock for a given period of time
+        :param target_date: desired date as a datetime.date, leave empty to
+            get for all available dates
+        :return: a list of dicts() each containing data available for a stock
+            for a given period of time
         """
+        getInfo = {'Items': []}
+        self.Logger.info(f'''Looking for the info with provided peremeters:
+            symbol = {symbol_to_find} and date = {target_date}''')
+        try:
+            if symbol_to_find is not None:
+                if target_date is not None:
+                    string_date = target_date.strftime("%Y-%m-%d")
+                    symbol_expression = Key('symbol').eq(symbol_to_find)
+                    date_expression = Key('date').eq(string_date)
+                    getInfo = self.table.query(
+                        KeyConditionExpression=symbol_expression,
+                        FilterExpression=date_expression)
+                else:
+                    symbol_expression = Key('symbol').eq(symbol_to_find)
+                    getInfo = self.table.query(
+                        KeyConditionExpression=symbol_expression)
+            else:
+                if target_date is not None:
+                    string_date = target_date.strftime("%Y-%m-%d")
+                    date_expression = Key('date').eq(string_date)
+                    getInfo = self.table.scan(FilterExpression=date_expression)
+            return getInfo['Items']
+        except Exception as e:
+            raise app.AppException(e, message="""Unexpected behaviour during
+                the request to the DynamoDB. {e}""")
