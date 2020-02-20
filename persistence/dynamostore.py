@@ -16,7 +16,7 @@ class DynamoStore:
         try:
             self.table.table_status in (
                 "CREATING", "UPDATING", "DELETING", "ACTIVE")
-        except ClientError:
+        except self.dynamo.meta.client.exceptions.ResourceNotFoundException:
             self.Logger.info(f'DynamoDB table {table_name} doesn\'t exist,'
                              'creating...')
             self.dynamo.create_table(
