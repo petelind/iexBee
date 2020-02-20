@@ -10,6 +10,8 @@ jobs:
     services:
       localstack:
         image: localstack/localstack:0.10.7
+        ports:
+          - 4569:4569
         env:
           SERVICES: dynamodb
     steps:
@@ -21,4 +23,6 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
       - name: tests
-        run: echo 'Hello world'
+        run: python -m pytest -v tests
+        env: 
+          DYNAMO_URI: http://localhost:4569
