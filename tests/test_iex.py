@@ -26,7 +26,5 @@ class TestIEX(TestCase):
         with open('tests/fixtures/companies_dump.json', mode='r') as companies_file:
             companies = json.load(companies_file)
 
-        self.IexTest.populate_dividends()
-
         # ASSERT
         self.assertDictEqual(companies, self.IexTest.Symbols)
