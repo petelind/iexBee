@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, mock
 from datawell.iex import Iex
 import app
 import json
@@ -15,15 +15,18 @@ class MockIEX:
             return json.load(companies_file)
 
 
-Iex = MockIEX
-IexTest = Iex()
-
-
 class TestIEX(TestCase):
+    @mock.patch.object(Iex, '__init__', MockIEX.__init__)
+    @mock.patch.object(Iex, 'get_stocks', MockIEX.get_stocks)
+    def setUp(self):
+        self.IexTest = Iex()
+
     def test_iex_get_stocks_patched(self):
         # ARRANGE
         with open('tests/fixtures/companies_dump.json', mode='r') as companies_file:
             companies = json.load(companies_file)
 
+        self.IexTest.populate_dividends()
+
         # ASSERT
-        self.assertDictEqual(companies, IexTest.Symbols)
+        self.assertDictEqual(companies, self.IexTest.Symbols)
