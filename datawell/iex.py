@@ -18,6 +18,7 @@ class Iex(object):
         self.populate_dividends()
         self.get_company()
         self.get_financials()
+        self.get_cash_flow()
         self.get_books()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
@@ -48,6 +49,29 @@ class Iex(object):
 
         except Exception as e:
             message = 'Failed while retrieving advanced stats!'
+            ex = app.AppException(e, message)
+            raise ex
+
+    def get_cash_flow(self, symbols: dict = {}):
+        """
+        The method for IEX which will populate CASH FLOW data either for all stocks (if no ticker given)
+        or a particular stock (if ticker given).
+        After method call, particular ticker should have a dict added to it with data returned by the call.
+        Here is API endpoint data:
+        https://iexcloud.io/docs/api/#cash-flow
+        """
+        try:
+            symbols = self.Symbols if not symbols else symbols
+            self.Logger.info("Populate symbols with cash-flow data.")
+            [
+                symbol_data.update(
+                  book=self.load_from_iex(
+                    f'{app.BASE_API_URL}stock/{symbol}/cash-flow/{app.API_TOKEN}'
+                  )
+                ) for symbol, symbol_data in symbols.items()
+            ]
+        except Exception as e:
+            message = 'Failed while retrieving cash-flow list!'
             ex = app.AppException(e, message)
             raise ex
 
