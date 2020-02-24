@@ -1,6 +1,5 @@
 from datetime import datetime
 import boto3
-from botocore.exceptions import ClientError
 import app
 from collections.abc import MutableMapping
 from boto3.dynamodb.conditions import Key
@@ -60,20 +59,31 @@ class DynamoStore:
         :param symbols_to_remove: list of dicts each containing 'symbol' string
         :returns: number of the elements removed as int, 0 if not found, AppException if AWS Error: No access etc
         """
-        if symbols_to_remove:
-            for symbol in symbols_to_remove:
-                self._delete_one_item(symbol)
-        else:
-            all_companies: dict = self.table.scan().get("Items", [])
-            for company in all_companies:
-                self._delete_one_item(company["symbol"])
-
-    def _delete_one_item(self, company):
-        self.table.delete_item(
-            Key={
-                "symbol": company
-            }
-        )
+        try:
+            deleted_items = 0
+            with self.table.batch_writer() as batch:
+                if symbols_to_remove:
+                    deleted_items = len(symbols_to_remove)
+                    for symbol in symbols_to_remove:
+                        batch.delete_item(Key={"symbol": symbol})
+                else:
+                    last_evaluated_key = None
+                    while True:
+                        if last_evaluated_key:
+                            scan_results = self.table.scan(ExclusiveStartKey=last_evaluated_key)
+                        else:
+                            scan_results = self.table.scan()
+                        for symbol in scan_results.get('Items', {}):
+                            batch.delete_item(Key={"symbol": symbol['symbol']})
+                        last_evaluated_key = scan_results.get('LastEvaluatedKey', None)
+                        deleted_items += scan_results['Count']
+                        if not last_evaluated_key:
+                            break
+            return deleted_items
+        except Exception as e:
+            message = 'Failed to clean table'
+            ex = app.AppException(e, message)
+            raise ex
 
     def remove_empty_strings(self, dict_to_clean: dict):
         """
