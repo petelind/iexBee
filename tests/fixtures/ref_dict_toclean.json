@@ -1,0 +1,39 @@
+{
+  "StringValue": "qerty1",
+  "ZeroValue": 0,
+  "FalseValue": "False",
+  "EmptyString": "",
+  "NoneValue": "None",
+  "EmptyList": [],
+  "EmptyDict": {},
+  "NestedDict": {
+    "NestedDict_StringValue": "querty2",
+    "NestedDict_ZeroValue": 0,
+    "NestedDict_FalseValue": "False",
+    "NestedDict_EmptyString": "",
+    "NestedDict_NoneValue": "None",
+    "NestedDict_EmptyList": [],
+    "NestedDict_EmptyDict": {},
+    "NestedDict_EmptyListInDict": {
+      "EmptyList": []
+    },
+    "NestedDict_EmptyDictInList": [
+      {}
+    ]
+  },
+  "NestedList": [
+    "query3",
+    0,
+    "False",
+    "",
+    "None",
+    [],
+    {},
+    {
+      "EmptyList": []
+    },
+    [
+      {}
+    ]
+  ]
+}
