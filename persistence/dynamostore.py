@@ -51,7 +51,7 @@ class DynamoStore:
         with self.table.batch_writer() as batch:
             for r in documents:
                 self.Logger.debug(f'put into dynamodb {r}')
-                batch.put_item(Item=r)
+                batch.put_item(Item=self.remove_empty_strings(r))
         return True
 
     def clean_table(self, symbols_to_remove: list):
@@ -75,7 +75,7 @@ class DynamoStore:
             }
         )
 
-    def remove_empty_strings(dict_to_clean: dict):
+    def remove_empty_strings(self, dict_to_clean: dict):
         """
         The method removes all the empty key+value pairs from the dict
         you give it. The method is used to clean up dicts before

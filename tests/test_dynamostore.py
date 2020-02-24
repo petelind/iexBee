@@ -41,8 +41,11 @@ class TestDynamoStore(TestCase):
     def test_store_documents_PassValidDocs_ExpectThemAppearInDB(self):
         # ARRANGE
         symbol_to_load = 'AEB'
-        with open(f'tests/fixtures/{symbol_to_load}.response.json', mode='r') as company_file:
-            serialized_doc = json.load(company_file, parse_float=decimal.Decimal)
+        serialized_doc = dynamo_store.remove_empty_strings(
+            self.read_fixture(
+                f'tests/fixtures/{symbol_to_load}.response.json'
+            )
+        )
         self.assertFalse(self.item_exists(symbol_to_load),
                          'Item should exist before the deletion')
 
@@ -56,10 +59,28 @@ class TestDynamoStore(TestCase):
         self.assertDictEqual(get_it_back, serialized_doc,
                              'Stored document not equal')
 
+    def test_store_documents_PassWithNullDocs_ExpectStoredWhithoutNull(self):
+        # ARRANGE
+        symbol_to_load = 'AAME'
+        serialized_doc = self.read_fixture(
+            f'tests/fixtures/{symbol_to_load}.response.json'
+        )
+        self.assertFalse(self.item_exists(symbol_to_load),
+                         'Item should exist before the deletion')
+
+        # ACT:
+        dynamo_store.store_documents([serialized_doc])
+        get_it_back = dynamo_db_table.query(
+            KeyConditionExpression=Key('symbol').eq(symbol_to_load)
+        )['Items'][0]
+
+        # ASSERT:
+        self.assertNotEqual(get_it_back, serialized_doc,
+                            'Stored document need to be not equal')
 
     def test_clean_table_PassListWithOneExistingSymbol_ExpectSymbolDeletedFromDB(self):
         # ARRANGE:
-        self.load_companies('companies_dump.json')
+        self.load_companies('tests/fixtures/companies_dump.json')
         initial_count = self.get_number_of_items_in_table()
         symbol_to_be_deleted = "A"
         assert self.item_exists(symbol_to_be_deleted), 'Item should exist before the deletion'
@@ -75,7 +96,7 @@ class TestDynamoStore(TestCase):
 
     def test_clean_table_PassListWithNumberOfExistingSymbols_ExpectSymbolsDeletedFromDB(self):
         # ARRANGE:
-        self.load_companies('companies_dump.json')
+        self.load_companies('tests/fixtures/companies_dump.json')
         initial_count = self.get_number_of_items_in_table()
         symbols_to_be_deleted = ["AA", "AACG", "AAMC"]
         for symbol in symbols_to_be_deleted:
@@ -92,7 +113,7 @@ class TestDynamoStore(TestCase):
 
     def test_clean_table_PassEmptyListOfSymbols_ExpectAllSymbolsFromDB(self):
         # ARRANGE:
-        self.load_companies('companies_dump.json')
+        self.load_companies('tests/fixtures/companies_dump.json')
 
         # ACT
         dynamo_store.clean_table(symbols_to_remove=[])
@@ -101,9 +122,12 @@ class TestDynamoStore(TestCase):
         result_count = self.get_number_of_items_in_table()
         self.assertEqual(result_count, 0, f'Add items should be deleted')
 
+    def read_fixture(self, file: str):
+        with open(file, mode='r') as companies_file:
+            return json.load(companies_file, parse_float=decimal.Decimal)
+
     def load_companies(self, file: str):
-        with open('tests/fixtures/companies_dump.json', mode='r') as companies_file:
-            companies = json.load(companies_file, parse_float=decimal.Decimal)
+        companies = self.read_fixture(file)
         for company in companies.values():
             dynamo_db_table.put_item(Item=company)
 
