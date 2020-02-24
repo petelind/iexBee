@@ -1,0 +1,18 @@
+{
+  "StringValue": "qerty1",
+  "ZeroValue": 0,
+  "FalseValue": "False",
+  "NoneValue": "None",
+  "NestedDict": {
+    "NestedDict_StringValue": "querty2",
+    "NestedDict_ZeroValue": 0,
+    "NestedDict_FalseValue": "False",
+    "NestedDict_NoneValue": "None"
+  },
+  "NestedList": [
+    "query3",
+    0,
+    "False",
+    "None"
+  ]
+}

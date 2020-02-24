@@ -96,6 +96,10 @@ class DynamoStore:
 
         try:
 
+            if not dict_to_clean:
+                self.Logger.warning(f'Empty dict has been provided. Function returns nothing.')
+                return None
+
             # Function to search in nested list:
             def delete_from_list(some_list):
                 modified_list = []
@@ -106,7 +110,9 @@ class DynamoStore:
                             if a:
                                 modified_list.append(a)
                         elif isinstance(value, list):
-                            modified_list.append(delete_from_list(value))
+                            a = delete_from_list(value)
+                            if a:
+                                modified_list.append(a)
                         else:
                             modified_list.append(value)
                 return modified_list
@@ -117,9 +123,13 @@ class DynamoStore:
                 for key, value in dictionary.items():
                     if value or value is False or value == 0:
                         if isinstance(value, MutableMapping):
-                            modified_dict[key] = delete_keys_from_dict(value)
+                            a = delete_keys_from_dict(value)
+                            if a:
+                                modified_dict[key] = a
                         elif isinstance(value, list):
-                            modified_dict[key] = delete_from_list(value)
+                            a = delete_from_list(value)
+                            if a:
+                                modified_dict[key] = a
                         else:
                             modified_dict[key] = value
                 return modified_dict

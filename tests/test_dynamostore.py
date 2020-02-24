@@ -3,6 +3,7 @@ import json
 from unittest import TestCase
 from persistence.dynamostore import DynamoStore
 from boto3.dynamodb.conditions import Key
+from collections.abc import MutableMapping
 import boto3
 import app
 
@@ -122,6 +123,38 @@ class TestDynamoStore(TestCase):
         result_count = self.get_number_of_items_in_table()
         self.assertEqual(result_count, 0, f'Add items should be deleted')
 
+    def test_remove_empty_strings_PassReferenceDictWithEmptyValue_ExpectReferenceDictWithoutEmptyValues(self):
+        # ARRANGE
+        src_dict = self.read_fixture('tests/fixtures/ref_dict_toclean.json')
+        ref_dict = self.read_fixture('tests/fixtures/ref_dict.json')
+
+        # ACT
+        res_dict = dynamo_store.remove_empty_strings(dict_to_clean=src_dict)
+
+        # ASSERT
+        self.assertDictEqual(res_dict, ref_dict, f'Result dict and reference dict are different.')
+
+    def test_remove_empty_strings_PassCompaniesDump_ExpectNoEmptyValuesInResultDict(self):
+        # ARRANGE
+        src_dict = self.read_fixture('tests/fixtures/companies_dump.json')
+
+        # ACT
+        res_dict = dynamo_store.remove_empty_strings(dict_to_clean=src_dict)
+
+        # ASSERT
+        dict_has_empty_values = self.has_empty_value_in_dict(res_dict)
+        self.assertFalse(dict_has_empty_values, f"Result dict shouldn't have empty values")
+
+    def test_remove_empty_strings_PassEmptyDict_ExpectWarningAndReturnNothing(self):
+        # ARRANGE
+        src_dict = {}
+
+        # ACT
+        res_dict = dynamo_store.remove_empty_strings(dict_to_clean=src_dict)
+
+        # ASSERT
+        self.assertEqual(res_dict, None, f"Function should return empty value.")
+
     def read_fixture(self, file: str):
         with open(file, mode='r') as companies_file:
             return json.load(companies_file, parse_float=decimal.Decimal)
@@ -136,3 +169,23 @@ class TestDynamoStore(TestCase):
 
     def item_exists(self, symbol: str):
         return 'Item' in dynamo_db_table.get_item(Key={"symbol": symbol})
+
+    def has_empty_value_in_dict(self, src_dict: dict):
+        for key, value in src_dict.items():
+            if value or value is False or value == 0:
+                if isinstance(value, MutableMapping):
+                    return self.has_empty_value_in_dict(value)
+                elif isinstance(value, list):
+                    return self.has_empty_value_in_list(value)
+            else:
+                return True
+
+    def has_empty_value_in_list(self, src_list: list):
+        for value in src_list:
+            if value or value is False or value == 0:
+                if isinstance(value, MutableMapping):
+                    return self.has_empty_value_in_dict(value)
+                elif isinstance(value, list):
+                    return self.has_empty_value_in_list(value)
+            else:
+                return True
