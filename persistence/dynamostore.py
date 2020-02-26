@@ -6,38 +6,62 @@ from boto3.dynamodb.conditions import Key
 
 
 class DynamoStore:
-    def __init__(self, table_name: str):
+    def __init__(self, table_name: str, part_key: str = "symbol"):
         self.Logger = app.get_logger(__name__)
-        self.dynamo = boto3.resource(
+        # Initialize both client and resource along with the class for usage in methods
+        self.dynamo_client = boto3.client(
+            'dynamodb',
+            region_name=app.REGION,
+            endpoint_url=app.DYNAMO_URI)
+        self.dynamo_resource = boto3.resource(
             "dynamodb",
             region_name=app.REGION,
             endpoint_url=app.DYNAMO_URI)
-        self.table = self.dynamo.Table(table_name)
+        self.table = self.dynamo_resource.Table(table_name)
         try:
             self.table.table_status in (
                 "CREATING", "UPDATING", "DELETING", "ACTIVE")
-        except self.dynamo.meta.client.exceptions.ResourceNotFoundException:
-            self.Logger.info(f'DynamoDB table {table_name} doesn\'t exist,'
-                             'creating...')
-            self.dynamo.create_table(
-                TableName=table_name,
-                AttributeDefinitions=[
-                    {
-                        'AttributeName': 'symbol',
-                        'AttributeType': 'S',
-                    }
-                ],
-                KeySchema=[
-                    {
-                        'AttributeName': 'symbol',
-                        'KeyType': 'HASH',
-                    },
-                ],
-                ProvisionedThroughput={
-                    'ReadCapacityUnits': 5,
-                    'WriteCapacityUnits': 5,
-                },
-            )
+        except self.dynamo_resource.meta.client.exceptions.ResourceNotFoundException:
+            self.Logger.info(f'Table {table_name} doesn\'t exist.')
+            self.create_table(table_name, part_key)
+
+    def create_table(self, table_name, part_key: str):
+        """
+        Creates DynamoDB table with given keys
+        :param table_name: DynamoDB table name
+        :param part_key: DynamoDB partition key
+        :return: Nothing
+        """
+
+        waiter = self.dynamo_client.get_waiter('table_exists')
+        self.Logger.info(f'Creating DynamoDB table {table_name}...')
+        self.dynamo_resource.create_table(
+            TableName=table_name,
+            AttributeDefinitions=[
+                {
+                    'AttributeName': part_key,
+                    'AttributeType': 'S',
+                }
+            ],
+            KeySchema=[
+                {
+                    'AttributeName': part_key,
+                    'KeyType': 'HASH',
+                }
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 5,
+                'WriteCapacityUnits': 5,
+            },
+        )
+
+        waiter.wait(
+            TableName=table_name,
+            WaiterConfig={
+                'Delay': 5,
+                'MaxAttempts': 10
+            }
+        )
 
     def store_documents(self, documents: list):
         """
