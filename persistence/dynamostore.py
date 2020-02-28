@@ -79,31 +79,16 @@ class DynamoStore:
 
     def clean_table(self, symbols_to_remove: list):
         """
-        Use this one to either clean specific stocks from the db or clean up the db if its small.
+        Use this one to either clean specific stocks from the db or delete the table if symbols_to_remove is empty.
         :param symbols_to_remove: list of dicts each containing 'symbol' string
-        :returns: number of the elements removed as int, 0 if not found, AppException if AWS Error: No access etc
         """
         try:
-            deleted_items = 0
             with self.table.batch_writer() as batch:
                 if symbols_to_remove:
-                    deleted_items = len(symbols_to_remove)
                     for symbol in symbols_to_remove:
                         batch.delete_item(Key={"symbol": symbol})
                 else:
-                    last_evaluated_key = None
-                    while True:
-                        if last_evaluated_key:
-                            scan_results = self.table.scan(ExclusiveStartKey=last_evaluated_key)
-                        else:
-                            scan_results = self.table.scan()
-                        for symbol in scan_results.get('Items', {}):
-                            batch.delete_item(Key={"symbol": symbol['symbol']})
-                        last_evaluated_key = scan_results.get('LastEvaluatedKey', None)
-                        deleted_items += scan_results['Count']
-                        if not last_evaluated_key:
-                            break
-            return deleted_items
+                    self.table.delete()
         except Exception as e:
             message = 'Failed to clean table'
             ex = app.AppException(e, message)

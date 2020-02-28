@@ -1,6 +1,7 @@
 import decimal
 import json
 from unittest import TestCase
+from unittest.mock import patch
 from persistence.dynamostore import DynamoStore
 from boto3.dynamodb.conditions import Key
 from collections.abc import MutableMapping
@@ -112,16 +113,16 @@ class TestDynamoStore(TestCase):
         for symbol_to_be_deleted in symbols_to_be_deleted:
             self.assertFalse(self.item_exists(symbol_to_be_deleted), f'Item {symbol_to_be_deleted} should be deleted')
 
-    def test_clean_table_PassEmptyListOfSymbols_ExpectAllSymbolsFromDB(self):
+    def test_clean_table_PassEmptyListOfSymbols_ExpectTableDeleteMethodCalled(self):
         # ARRANGE:
         self.load_companies('tests/fixtures/companies_dump.json')
 
         # ACT
-        dynamo_store.clean_table(symbols_to_remove=[])
+        with patch.object(dynamo_store.table, 'delete') as mock:
+            dynamo_store.clean_table(symbols_to_remove=[])
 
         # ASSERT
-        result_count = self.get_number_of_items_in_table()
-        self.assertEqual(result_count, 0, f'Add items should be deleted')
+        mock.assert_called()
 
     def test_remove_empty_strings_PassReferenceDictWithEmptyValue_ExpectReferenceDictWithoutEmptyValues(self):
         # ARRANGE
