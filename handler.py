@@ -4,6 +4,7 @@ from datetime import datetime
 
 import app
 from datawell.iex import Iex
+from persistence.dynamostore import DynamoStore
 
 
 def lambda_handler(event=None, context=None):
@@ -11,13 +12,10 @@ def lambda_handler(event=None, context=None):
     try:
         start_time = datetime.now()
 
-        datasource = Iex()
-        # This funny thing is called list comprehension and is a damn fast iterator...
-        # Here is how it works: https://nyu-cds.github.io/python-performance-tips/08-loops/
-        print(f'{datasource}')
-        # ^ operand       ^ subject  ^iterable (collection or whatever is able to __iter()__)
+        datasource = Iex(app.STOCKS)
+        dynamostore = DynamoStore('IEXsnapshot')
+        dynamostore.store_documents(datasource.get_symbols())
 
-        # Ok, lets time our run...
         end_time = datetime.now()
         run_time = end_time - start_time
         logger.info(f'Timing: It took {run_time} to finish this run')

@@ -43,7 +43,7 @@ class TestDynamoStore(TestCase):
     def test_store_documents_PassValidDocs_ExpectThemAppearInDB(self):
         # ARRANGE
         symbol_to_load = 'AEB'
-        serialized_doc = dynamo_store.remove_empty_strings(
+        serialized_doc = app.remove_empty_strings(
             self.read_fixture(
                 f'tests/fixtures/{symbol_to_load}.response.json'
             )
@@ -60,25 +60,6 @@ class TestDynamoStore(TestCase):
         # ASSERT:
         self.assertDictEqual(get_it_back, serialized_doc,
                              'Stored document not equal')
-
-    def test_store_documents_PassWithNullDocs_ExpectStoredWhithoutNull(self):
-        # ARRANGE
-        symbol_to_load = 'AAME'
-        serialized_doc = self.read_fixture(
-            f'tests/fixtures/{symbol_to_load}.response.json'
-        )
-        self.assertFalse(self.item_exists(symbol_to_load),
-                         'Item should exist before the deletion')
-
-        # ACT:
-        dynamo_store.store_documents([serialized_doc])
-        get_it_back = dynamo_db_table.query(
-            KeyConditionExpression=Key('symbol').eq(symbol_to_load)
-        )['Items'][0]
-
-        # ASSERT:
-        self.assertNotEqual(get_it_back, serialized_doc,
-                            'Stored document need to be not equal')
 
     def test_clean_table_PassListWithOneExistingSymbol_ExpectSymbolDeletedFromDB(self):
         # ARRANGE:
@@ -130,7 +111,7 @@ class TestDynamoStore(TestCase):
         ref_dict = self.read_fixture('tests/fixtures/ref_dict.json')
 
         # ACT
-        res_dict = dynamo_store.remove_empty_strings(dict_to_clean=src_dict)
+        res_dict = app.remove_empty_strings(dict_to_clean=src_dict)
 
         # ASSERT
         self.assertDictEqual(res_dict, ref_dict, f'Result dict and reference dict are different.')
@@ -140,7 +121,7 @@ class TestDynamoStore(TestCase):
         src_dict = self.read_fixture('tests/fixtures/companies_dump.json')
 
         # ACT
-        res_dict = dynamo_store.remove_empty_strings(dict_to_clean=src_dict)
+        res_dict = app.remove_empty_strings(dict_to_clean=src_dict)
 
         # ASSERT
         dict_has_empty_values = self.has_empty_value_in_dict(res_dict)
@@ -151,7 +132,7 @@ class TestDynamoStore(TestCase):
         src_dict = {}
 
         # ACT
-        res_dict = dynamo_store.remove_empty_strings(dict_to_clean=src_dict)
+        res_dict = app.remove_empty_strings(dict_to_clean=src_dict)
 
         # ASSERT
         self.assertEqual(res_dict, None, f"Function should return empty value.")

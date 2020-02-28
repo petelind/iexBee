@@ -8,15 +8,19 @@ from functools import wraps
 import time
 import decimal
 import json
+from collections.abc import MutableMapping
+
 
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
 API_TOKEN = f"?token={os.getenv('API_TOKEN')}"
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
 DYNAMO_URI = os.getenv('DYNAMO_URI', None)
+STOCKS = {}
 
 if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
+    STOCKS = {'A': {'symbol': 'A'}, 'AA': {'symbol': 'AA'}, 'AAAU': {'symbol': 'AAAU'}}
 
 REGION = os.getenv('REGION')
 TABLE = os.getenv('TABLE')
@@ -85,3 +89,59 @@ def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
         return f_retry  # true decorator
 
     return deco_retry
+
+
+def remove_empty_strings(dict_to_clean: dict):
+    """
+    The method removes all the empty key+value pairs from the dict
+    you give it. The method is used to clean up dicts before
+    persisting them to the DynamoDB.
+    :param dict_to_clean: as dict()
+    :return: only non-empty key+value pairs from the source dict as dict()
+    """
+    if not dict_to_clean:
+        return None
+
+    try:
+
+        # Function to search in nested list:
+        def delete_from_list(some_list):
+            modified_list = []
+            for value in some_list:
+                if value or value is False or value == 0:
+                    if isinstance(value, MutableMapping):
+                        a = delete_keys_from_dict(value)
+                        if a:
+                            modified_list.append(a)
+                    elif isinstance(value, list):
+                        a = delete_from_list(value)
+                        if a:
+                            modified_list.append(a)
+                    else:
+                        modified_list.append(value)
+            return modified_list
+
+        # Function to search in nested dict:
+        def delete_keys_from_dict(dictionary):
+            modified_dict = {}
+            for key, value in dictionary.items():
+                if value or value is False or value == 0:
+                    if isinstance(value, MutableMapping):
+                        a = delete_keys_from_dict(value)
+                        if a:
+                            modified_dict[key] = a
+                    elif isinstance(value, list):
+                        a = delete_from_list(value)
+                        if a:
+                            modified_dict[key] = a
+                    else:
+                        modified_dict[key] = value
+            return modified_dict
+
+        res_dict = delete_keys_from_dict(dict_to_clean)
+        return(res_dict)
+
+    except Exception as e:
+        message = 'Failed while cleaning dict for key-value empty pairs!'
+        ex = AppException(e, message)
+        raise ex

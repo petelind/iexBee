@@ -9,10 +9,10 @@ import app
 
 class Iex(object):
 
-    def __init__(self):
+    def __init__(self, symbols: dict = {} ):
         self.dict_symbols = {}
         self.Logger = app.get_logger(__name__)
-        self.Symbols = self.get_stocks()
+        self.Symbols = symbols if symbols else self.get_stocks()
         # now takes too long time - that was the idea :)
         self.get_astats()
         self.populate_dividends()
@@ -22,6 +22,9 @@ class Iex(object):
         self.get_books()
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
+
+    def get_symbols(self):
+        return self.Symbols.values()
 
     def __format__(self, format):
         return "\n".join(f"symbol {s} with data {d}"
@@ -45,6 +48,7 @@ class Iex(object):
                 self.Logger.debug(
                     f'advanced stats for {stock} is {result}')
                 data['advanced-stats'] = result
+                app.remove_empty_strings(data)
             return upd
 
         except Exception as e:
@@ -65,9 +69,9 @@ class Iex(object):
             self.Logger.info("Populate symbols with cash-flow data.")
             [
                 symbol_data.update(
-                  book=self.load_from_iex(
+                  book=app.remove_empty_strings(self.load_from_iex(
                     f'{app.BASE_API_URL}stock/{symbol}/cash-flow/{app.API_TOKEN}'
-                  )
+                  ))
                 ) for symbol, symbol_data in symbols.items()
             ]
         except Exception as e:
@@ -87,9 +91,9 @@ class Iex(object):
             self.Logger.info("Populate symbols with book data.")
             [
                 symbol_data.update(
-                  book=self.load_from_iex(
+                  book=app.remove_empty_strings(self.load_from_iex(
                     f'{app.BASE_API_URL}stock/{symbol}/book/{app.API_TOKEN}'
-                  )
+                  ))
                 ) for symbol, symbol_data in symbols.items()
             ]
         except Exception as e:
@@ -106,7 +110,11 @@ class Iex(object):
         try:
             # basically we create a market snapshot
             uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/{app.API_TOKEN}'
-            [self.dict_symbols.update({stock.get("symbol"): stock}) for stock in self.load_from_iex(uri)]
+            [
+                self.dict_symbols.update(
+                    {stock.get("symbol"): app.remove_empty_strings(stock)}
+                ) for stock in self.load_from_iex(uri)
+            ]
             return self.dict_symbols
 
         except Exception as e:
@@ -128,6 +136,7 @@ class Iex(object):
             for stock, data in upd.items():
                 uri = f'{app.BASE_API_URL}stock/{stock}/dividends/{period}{app.API_TOKEN}'
                 data['dividends'] = self.load_from_iex(uri)
+                app.remove_empty_strings(data)
         except Exception as e:
             message = f'Failed while retrieving dividends for tickers {tickers}!'
             ex = app.AppException(e, message)
@@ -148,6 +157,7 @@ class Iex(object):
                 company_info = self.load_from_iex(uri)
             # poppulate with company info
                 symbol_data.update(company=company_info)
+                app.remove_empty_strings(symbol_data)
             return Symbols
         except Exception as e:
             message = 'Failed while retrieving companies!'
@@ -168,6 +178,7 @@ class Iex(object):
                 self.Logger.debug(f'Updating {symbol} symbol with financials.')
                 uri = f'{app.BASE_API_URL}stock/{symbol}/financials/{app.API_TOKEN}'
                 data["financials"] = self.load_from_iex(uri)["financials"]
+                app.remove_empty_strings(data)
 
             except KeyError:
                 # Some symbols don't have financial info associated, so skipping
