@@ -5,7 +5,7 @@ from boto3.dynamodb.conditions import Key
 
 
 class DynamoStore:
-    def __init__(self, table_name: str, part_key: str = "symbol"):
+    def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol"):
         self.Logger = app.get_logger(__name__)
         # Initialize both client and resource along with the class for usage in methods
         self.dynamo_client = boto3.client(
@@ -22,13 +22,14 @@ class DynamoStore:
                 "CREATING", "UPDATING", "DELETING", "ACTIVE")
         except self.dynamo_resource.meta.client.exceptions.ResourceNotFoundException:
             self.Logger.info(f'Table {table_name} doesn\'t exist.')
-            self.create_table(table_name, part_key)
+            self.create_table(table_name, part_key, sort_key)
 
-    def create_table(self, table_name, part_key: str):
+    def create_table(self, table_name, part_key: str, sort_key: str):
         """
         Creates DynamoDB table with given keys
         :param table_name: DynamoDB table name
         :param part_key: DynamoDB partition key
+        :param sort_key: DynamoDB sort key
         :return: Nothing
         """
 
@@ -40,12 +41,20 @@ class DynamoStore:
                 {
                     'AttributeName': part_key,
                     'AttributeType': 'S',
-                }
+                },
+                {
+                    'AttributeName': sort_key,
+                    'AttributeType': 'S',
+                },
             ],
             KeySchema=[
                 {
                     'AttributeName': part_key,
                     'KeyType': 'HASH',
+                },
+                {
+                    'AttributeName': sort_key,
+                    'KeyType': 'RANGE',
                 }
             ],
             ProvisionedThroughput={
