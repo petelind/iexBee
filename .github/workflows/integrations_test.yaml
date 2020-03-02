@@ -1,0 +1,26 @@
+name: unit_tests
+
+on:
+  create:
+    tags:
+      - v*
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.8-alpine
+    steps:
+      - name: checkout
+        uses: actions/checkout@v1
+      - name: setup
+        run: |
+          pip install -r requirements.txt
+      - name: tests
+        run: python handler.py
+        env: 
+          TEST_ENVIRONMENT: true
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
