@@ -1,6 +1,9 @@
 name: unit_tests
 
-on: [push]
+on: 
+  push:
+    branches: 
+      - '*'
 
 jobs:
   tests:

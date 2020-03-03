@@ -19,7 +19,7 @@ jobs:
       - name: tests
         run: python handler.py
         env: 
-          TEST_ENVIRONMENT: True
+          TEST_ENVIRONMENT: 'True'
           API_TOKEN: ${{ secrets.API_TOKEN }}
           AWS_DEFAULT_REGION: us-east-1
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
