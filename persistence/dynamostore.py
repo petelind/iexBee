@@ -57,6 +57,28 @@ class DynamoStore:
                     'KeyType': 'RANGE',
                 }
             ],
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'Reverse_index',
+                    'KeySchema': [
+                        {
+                            'AttributeName': sort_key,
+                            'KeyType': 'HASH',
+                        },
+                        {
+                            'AttributeName': part_key,
+                            'KeyType': 'RANGE',
+                        },
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL',
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 5,
+                    }
+                },
+            ],
             ProvisionedThroughput={
                 'ReadCapacityUnits': 5,
                 'WriteCapacityUnits': 5,
