@@ -116,7 +116,15 @@ class DynamoStore:
             with self.table.batch_writer() as batch:
                 if symbols_to_remove:
                     for symbol in symbols_to_remove:
-                        batch.delete_item(Key={"symbol": symbol})
+                        date_list = []
+                        item_list = self.table.query(
+                            IndexName='Reverse_index',
+                            KeyConditionExpression=Key('symbol').eq(symbol)
+                        )['Items']
+                        for item in item_list:
+                            date_list.append(item["date"])
+                        for date in date_list:
+                            batch.delete_item(Key={"date": date, "symbol": symbol})
                 else:
                     self.table.delete()
         except Exception as e:
