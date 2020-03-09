@@ -10,3 +10,6 @@ __pycache__/
 # IDE
 .vscode
 .idea
+
+# logs and binary files
+*.log

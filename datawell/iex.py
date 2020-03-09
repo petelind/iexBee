@@ -180,7 +180,7 @@ class Iex(object):
                 data["financials"] = self.load_from_iex(uri)["financials"]
                 app.remove_empty_strings(data)
 
-            except KeyError:
+            except (KeyError, TypeError):
                 # Some symbols don't have financial info associated, so skipping
                 continue
 
@@ -208,6 +208,8 @@ class Iex(object):
         except requests.exceptions.HTTPError as e:
             if response.status_code == 429:
                 raise app.AppException(e, message="Too Many Requests")
+            if response.status_code == 404 and response.text == 'Unknown symbol':
+                self.Logger.warning(f'Unknown symbol error while retrieving {uri}')
             else:
                 self.Logger.error(
                     f'Encountered an error: {response.status_code}'
