@@ -104,42 +104,27 @@ def remove_empty_strings(dict_to_clean: dict):
 
     try:
 
-        # Function to search in nested list:
-        def delete_from_list(some_list):
-            modified_list = []
-            for value in some_list:
-                if value or value is False or value == 0:
-                    if isinstance(value, MutableMapping):
-                        a = delete_keys_from_dict(value)
-                        if a:
-                            modified_list.append(a)
-                    elif isinstance(value, list):
-                        a = delete_from_list(value)
-                        if a:
-                            modified_list.append(a)
-                    else:
-                        modified_list.append(value)
-            return modified_list
+        def check_func(val):
+            if delete_keys_from_dict(val) not in [None, [], {}]:
+                return True
 
         # Function to search in nested dict:
         def delete_keys_from_dict(dictionary):
-            modified_dict = {}
-            for key, value in dictionary.items():
-                if value or value is False or value == 0:
-                    if isinstance(value, MutableMapping):
-                        a = delete_keys_from_dict(value)
-                        if a:
-                            modified_dict[key] = a
-                    elif isinstance(value, list):
-                        a = delete_from_list(value)
-                        if a:
-                            modified_dict[key] = a
-                    else:
-                        modified_dict[key] = value
-            return modified_dict
+            if type(dictionary) == list:
+                return [
+                    delete_keys_from_dict(val)
+                    for val in dictionary
+                    if check_func(val)]
+            elif type(dictionary) == dict:
+                return {
+                    key: delete_keys_from_dict(val)
+                    for key, val in dictionary.items()
+                    if check_func(val)}
+            elif dictionary or dictionary is False or dictionary == 0:
+                return dictionary
 
         res_dict = delete_keys_from_dict(dict_to_clean)
-        return(res_dict)
+        return res_dict
 
     except Exception as e:
         message = 'Failed while cleaning dict for key-value empty pairs!'
