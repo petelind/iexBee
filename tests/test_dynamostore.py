@@ -36,6 +36,7 @@ class TestDynamoStore(TestCase):
         for company in all_companies:
             dynamo_db_table.delete_item(
                 Key={
+                    "date": company["date"],
                     "symbol": company["symbol"]
                 }
             )
@@ -43,17 +44,19 @@ class TestDynamoStore(TestCase):
     def test_store_documents_PassValidDocs_ExpectThemAppearInDB(self):
         # ARRANGE
         symbol_to_load = 'AEB'
+        date = '2020-02-11'
         serialized_doc = app.remove_empty_strings(
             self.read_fixture(
                 f'tests/fixtures/{symbol_to_load}.response.json'
             )
         )
-        self.assertFalse(self.item_exists(symbol_to_load),
+        self.assertFalse(self.item_exists(symbol_to_load, date),
                          'Item should exist before the deletion')
 
         # ACT:
         dynamo_store.store_documents([serialized_doc])
         get_it_back = dynamo_db_table.query(
+            IndexName='Reverse_index',
             KeyConditionExpression=Key('symbol').eq(symbol_to_load)
         )['Items'][0]
 
@@ -66,7 +69,8 @@ class TestDynamoStore(TestCase):
         self.load_companies('tests/fixtures/companies_dump.json')
         initial_count = self.get_number_of_items_in_table()
         symbol_to_be_deleted = "A"
-        assert self.item_exists(symbol_to_be_deleted), 'Item should exist before the deletion'
+        date = "2020-02-11"
+        assert self.item_exists(symbol_to_be_deleted, date), 'Item should exist before the deletion'
 
         # ACT
         dynamo_store.clean_table(symbols_to_remove=[symbol_to_be_deleted])
@@ -75,15 +79,16 @@ class TestDynamoStore(TestCase):
         result_count = self.get_number_of_items_in_table()
         self.assertEqual(result_count + 1, initial_count,
                          'Items count should be decremented by 1 after the clean up')
-        self.assertFalse(self.item_exists(symbol_to_be_deleted), 'Item should be deleted')
+        self.assertFalse(self.item_exists(symbol_to_be_deleted, date), 'Item should be deleted')
 
     def test_clean_table_PassListWithNumberOfExistingSymbols_ExpectSymbolsDeletedFromDB(self):
         # ARRANGE:
         self.load_companies('tests/fixtures/companies_dump.json')
         initial_count = self.get_number_of_items_in_table()
         symbols_to_be_deleted = ["AA", "AACG", "AAMC"]
+        date = "2020-02-11"
         for symbol in symbols_to_be_deleted:
-            assert self.item_exists(symbol), f'Item {symbol} should exist before the deletion'
+            assert self.item_exists(symbol, date), f'Item {symbol} should exist before the deletion'
         # ACT
         dynamo_store.clean_table(symbols_to_remove=symbols_to_be_deleted)
 
@@ -92,7 +97,7 @@ class TestDynamoStore(TestCase):
         self.assertEqual(result_count + len(symbols_to_be_deleted), initial_count,
                          f'Items count should be decremented by {len(symbols_to_be_deleted)} after the clean up')
         for symbol_to_be_deleted in symbols_to_be_deleted:
-            self.assertFalse(self.item_exists(symbol_to_be_deleted), f'Item {symbol_to_be_deleted} should be deleted')
+            self.assertFalse(self.item_exists(symbol_to_be_deleted, date), f'Item {symbol_to_be_deleted} should be deleted')
 
     def test_clean_table_PassEmptyListOfSymbols_ExpectTableDeleteMethodCalled(self):
         # ARRANGE:
@@ -149,8 +154,8 @@ class TestDynamoStore(TestCase):
     def get_number_of_items_in_table(self):
         return len(dynamo_db_table.scan()['Items'])
 
-    def item_exists(self, symbol: str):
-        return 'Item' in dynamo_db_table.get_item(Key={"symbol": symbol})
+    def item_exists(self, symbol: str, date: str):
+        return 'Item' in dynamo_db_table.get_item(Key={"symbol": symbol, "date": date})
 
     def has_empty_value_in_dict(self, src_dict: dict):
         for key, value in src_dict.items():
