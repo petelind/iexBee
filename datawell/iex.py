@@ -80,7 +80,8 @@ class Iex(object):
         """
         try:
             self.Logger.info(f'Now retrieveing from {uri}')
-            response = requests.get(uri)
+            params = {'token': app.API_TOKEN}
+            response = requests.get(url=uri, params=params)
             response.raise_for_status()
             company_info = response.json(parse_float=Decimal)
             self.Logger.debug(f'Got response: {company_info}')
@@ -129,7 +130,7 @@ class Iex(object):
             )
             uri = (
                 f'{app.BASE_API_URL}stock/market/batch?symbols={tickers}&'
-                f'types={types}&range=1m&last=5&{app.API_TOKEN}'
+                f'types={types}&range=1m&last=5'
             ).encode('utf8')
 
 
