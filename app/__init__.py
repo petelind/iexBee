@@ -12,7 +12,7 @@ from collections.abc import MutableMapping
 
 
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
-API_TOKEN = f"?token={os.getenv('API_TOKEN')}"
+API_TOKEN = f"token={os.getenv('API_TOKEN')}"
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
 DYNAMO_URI = os.getenv('DYNAMO_URI', None)
@@ -105,7 +105,9 @@ def remove_empty_strings(dict_to_clean: dict):
     try:
 
         def check_func(val):
-            if delete_keys_from_dict(val) not in [None, [], {}]:
+            if val in [[], {}]:
+                return False
+            elif delete_keys_from_dict(val) not in [None, [], {}]:
                 return True
 
         # Function to search in nested dict:

@@ -5,6 +5,30 @@ Contains Iex class which retrieves information from IEX API
 from decimal import Decimal
 import requests
 import app
+from itertools import islice
+
+
+def split_request(func):
+    def batch_wrapper(self, symbols, datapoints):
+        ticker_chunk = 2
+        datapoint_chunk = 2
+        split_symbols = split_dict(symbols, ticker_chunk)
+        split_datapoints = split_list(datapoints, datapoint_chunk)
+        #[func(self, symbols, datapoints) for datapoints in split_datapoints for symbols in split_symbols]
+        for symbols in split_symbols:
+            for datapoints in split_datapoints:
+                #print(f'Symbols {symbols} for {datapoints}')
+                func(self, symbols, datapoints)
+
+    def split_dict(data, size):
+        it = iter(data)
+        for i in range(0, len(data), size):
+            yield {k: data[k] for k in islice(it, size)}
+
+    def split_list(data, size):
+        return [data[x:x+size] for x in range(0, len(data), size)]
+
+    return batch_wrapper
 
 
 class Iex(object):
@@ -20,6 +44,7 @@ class Iex(object):
         self.get_financials()
         self.get_cash_flow()
         self.get_books()
+        # self.get_symbols_batch(self.Symbols, ['advanced-stats','cash-flow','book','dividends','company','financials'])
         datapoints = ['logo', 'company']
         self.Datapoints = dict(zip(datapoints, datapoints))
 
@@ -43,7 +68,7 @@ class Iex(object):
             for stock, data in upd.items():
                 uri = (f'{app.BASE_API_URL}'
                        f'stock/{stock}/'
-                       f'advanced-stats/{app.API_TOKEN}')
+                       f'advanced-stats/?{app.API_TOKEN}')
                 result = self.load_from_iex(uri=uri)
                 self.Logger.debug(
                     f'advanced stats for {stock} is {result}')
@@ -70,7 +95,7 @@ class Iex(object):
             [
                 symbol_data.update(
                   book=app.remove_empty_strings(self.load_from_iex(
-                    f'{app.BASE_API_URL}stock/{symbol}/cash-flow/{app.API_TOKEN}'
+                    f'{app.BASE_API_URL}stock/{symbol}/cash-flow/?{app.API_TOKEN}'
                   ))
                 ) for symbol, symbol_data in symbols.items()
             ]
@@ -92,7 +117,7 @@ class Iex(object):
             [
                 symbol_data.update(
                   book=app.remove_empty_strings(self.load_from_iex(
-                    f'{app.BASE_API_URL}stock/{symbol}/book/{app.API_TOKEN}'
+                    f'{app.BASE_API_URL}stock/{symbol}/book/?{app.API_TOKEN}'
                   ))
                 ) for symbol, symbol_data in symbols.items()
             ]
@@ -109,7 +134,7 @@ class Iex(object):
         """
         try:
             # basically we create a market snapshot
-            uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/{app.API_TOKEN}'
+            uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/?{app.API_TOKEN}'
             [
                 self.dict_symbols.update(
                     {stock.get("symbol"): app.remove_empty_strings(stock)}
@@ -134,7 +159,7 @@ class Iex(object):
             self.Logger.debug(f'update stats for {tickers}')
             upd = self.Symbols if not tickers else tickers
             for stock, data in upd.items():
-                uri = f'{app.BASE_API_URL}stock/{stock}/dividends/{period}{app.API_TOKEN}'
+                uri = f'{app.BASE_API_URL}stock/{stock}/dividends/{period}?{app.API_TOKEN}'
                 data['dividends'] = self.load_from_iex(uri)
                 app.remove_empty_strings(data)
         except Exception as e:
@@ -153,7 +178,7 @@ class Iex(object):
             # company_list = []
             for symbol, symbol_data in Symbols.items():
                 self.Logger.debug(f'Update {symbol} symbol with company info.')
-                uri = f'{app.BASE_API_URL}stock/{symbol}/company{app.API_TOKEN}'
+                uri = f'{app.BASE_API_URL}stock/{symbol}/company?{app.API_TOKEN}'
                 company_info = self.load_from_iex(uri)
             # poppulate with company info
                 symbol_data.update(company=company_info)
@@ -213,3 +238,41 @@ class Iex(object):
                     f'Encountered an error: {response.status_code}'
                     f'( {response.text} ) while retrieving {uri}')
                 raise e
+
+    @split_request
+    def get_symbols_batch(self, symbols: dict, datapoints: list):
+        """
+        Updates Symbols dict with specified datapoints.
+        Url example to get data in batch:
+        https://sandbox.iexapis.com/stable/stock/market/batch?
+        symbols=aapl,fb&types=quote,news,chart&range=1m&last=5&
+        token=Tsk_d74d55cc782642a0ad8f1779ad6f0098
+
+        symbols - comma delimited list of symbols limited to 100.
+        This parameter is used only if market option is used.
+
+        datapoints - comma delimited list of endpoints to call.
+        The names should match the individual endpoint names.
+        Limited to 10 endpoints.
+        """
+
+        def array_to_string(data):
+            return ','.join([key for key in data]).lower()
+
+        try:
+
+            symbols = self.Symbols if not symbols else symbols
+            tickers = array_to_string(symbols)
+            types = array_to_string(datapoints)
+
+            self.Logger.info("Populate symbols with whole data set.")
+            self.Logger.debug(f'Following tickers: {tickers} will be populated with data from endpoints: {datapoints}.')
+            uri = f'{app.BASE_API_URL}stock/market/batch?symbols={tickers}&types={types}&range=1m&last=5&{app.API_TOKEN}'
+
+            result = self.load_from_iex(uri)
+            [symbols[key].update(val) for key, val in result.items()]
+
+        except Exception as e:
+            message = 'Failed while retrieving batch request data!'
+            ex = app.AppException(e, message)
+            raise ex
