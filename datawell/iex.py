@@ -277,7 +277,7 @@ class Iex(object):
                 f'types={types}&range=1m&last=5&{app.API_TOKEN}'
             ).encode('utf8')
 
-            result = self.load_from_iex(uri)
+            result = app.remove_empty_strings(self.load_from_iex(uri))
             if result:
                 [symbols[key].update(val) for key, val in result.items()]
 
