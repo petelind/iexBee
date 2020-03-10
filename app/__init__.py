@@ -71,19 +71,19 @@ def get_logger(module_name: str, level: str = logging.INFO):
 def check_func(val):
     if val in [[], {}]:
         return False
-    elif delete_keys_from_dict(val) not in [None, [], {}]:
+    elif remove_empty_strings(val) not in [None, [], {}]:
         return True
 
 # Function to search in nested dict:
-def delete_keys_from_dict(dictionary):
+def remove_empty_strings(dictionary):
     if type(dictionary) == list:
         return [
-            delete_keys_from_dict(val)
+            remove_empty_strings(val)
             for val in dictionary
             if check_func(val)]
     elif type(dictionary) == dict:
         return {
-            key: delete_keys_from_dict(val)
+            key: remove_empty_strings(val)
             for key, val in dictionary.items()
             if check_func(val)}
     elif dictionary or dictionary is False or dictionary == 0:
@@ -92,7 +92,7 @@ def delete_keys_from_dict(dictionary):
 def deco_dict_cleanup(f):
     @wraps(f)
     def f_dict_cleanup(*args, **kwargs):
-        return delete_keys_from_dict(f(*args, **kwargs))
+        return remove_empty_strings(f(*args, **kwargs))
     return f_dict_cleanup
 def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
     """

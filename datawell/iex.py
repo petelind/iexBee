@@ -49,6 +49,27 @@ class Iex(object):
                          for s, d in self.Symbols.items() or {})
 
 
+    def get_stocks(self):
+        """
+        Will return all the stocks being traded on IEX.
+        :return: list of stock tickers and basic facts as list(),
+            raises AppException if encountered an error
+        """
+        try:
+            # basically we create a market snapshot
+            uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/'
+            [
+                self.dict_symbols.update(
+                    {stock.get("symbol"): app.remove_empty_strings(stock)}
+                ) for stock in self.load_from_iex(uri)
+            ]
+            return self.dict_symbols
+
+        except Exception as e:
+            message = 'Failed while retrieving stock list!'
+            ex = app.AppException(e, message)
+            raise ex
+
     @app.retry(app.AppException, logger=app.get_logger(__name__))
     @app.deco_dict_cleanup
     def load_from_iex(self, uri: str):
