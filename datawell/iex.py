@@ -35,13 +35,6 @@ class Iex(object):
         self.dict_symbols = {}
         self.Logger = app.get_logger(__name__)
         self.Symbols = symbols if symbols else self.get_stocks()
-        # now takes too long time - that was the idea :)
-        # self.get_astats()
-        # self.populate_dividends()
-        # self.get_company()
-        # self.get_financials()
-        # self.get_cash_flow()
-        # self.get_books()
         self.datapoints = [
             'advanced-stats', 'cash-flow', 'book',
             'dividends', 'company', 'financials'
@@ -55,76 +48,6 @@ class Iex(object):
         return "\n".join(f"symbol {s} with data {d}"
                          for s, d in self.Symbols.items() or {})
 
-    def get_astats(self, tickers: dict = {}):
-        """
-        Will return all the advanced stats for tickers
-            or for all in self.Symbols
-        :return: True and populate self.Symbols with price to book,
-            raises AppException if encountered an error
-        """
-        try:
-            self.Logger.debug(f'update stats for {tickers}')
-            upd = self.Symbols if not tickers else tickers
-            for stock, data in upd.items():
-                uri = (f'{app.BASE_API_URL}'
-                       f'stock/{stock}/'
-                       f'advanced-stats/')
-                result = self.load_from_iex(uri=uri)
-                self.Logger.debug(
-                    f'advanced stats for {stock} is {result}')
-                data['advanced-stats'] = result
-                app.remove_empty_strings(data)
-            return upd
-
-        except Exception as e:
-            message = 'Failed while retrieving advanced stats!'
-            ex = app.AppException(e, message)
-            raise ex
-
-    def get_cash_flow(self, symbols: dict = {}):
-        """
-        The method for IEX which will populate CASH FLOW data either for all stocks (if no ticker given)
-        or a particular stock (if ticker given).
-        After method call, particular ticker should have a dict added to it with data returned by the call.
-        Here is API endpoint data:
-        https://iexcloud.io/docs/api/#cash-flow
-        """
-        try:
-            symbols = self.Symbols if not symbols else symbols
-            self.Logger.info("Populate symbols with cash-flow data.")
-            [
-                symbol_data.update(
-                  book=app.remove_empty_strings(self.load_from_iex(
-                    f'{app.BASE_API_URL}stock/{symbol}/cash-flow/'
-                  ))
-                ) for symbol, symbol_data in symbols.items()
-            ]
-        except Exception as e:
-            message = 'Failed while retrieving cash-flow list!'
-            ex = app.AppException(e, message)
-            raise ex
-
-    def get_books(self, symbols: dict = {}):
-        """
-        The method for IEX populates BOOK data either for all stocks (if no
-        ticker given) or a particular stock (if ticker given). The method
-        updates existing self.Symbols list with retrieved BOOK data. Here
-        is API endpoint data: https://iexcloud.io/docs/api/#book
-        """
-        try:
-            symbols = self.Symbols if not symbols else symbols
-            self.Logger.info("Populate symbols with book data.")
-            [
-                symbol_data.update(
-                  book=app.remove_empty_strings(self.load_from_iex(
-                    f'{app.BASE_API_URL}stock/{symbol}/book/'
-                  ))
-                ) for symbol, symbol_data in symbols.items()
-            ]
-        except Exception as e:
-            message = 'Failed while retrieving books list!'
-            ex = app.AppException(e, message)
-            raise ex
 
     def get_stocks(self):
         """
@@ -147,76 +70,8 @@ class Iex(object):
             ex = app.AppException(e, message)
             raise ex
 
-    def populate_dividends(self, tickers: dict = {}, period: str = '1y'):
-        """
-        Populates symbols with dividents info
-        :param tickers: list with tickers that should be populated, if None all the tickers are populated
-        :param period: str with period, 1y is default value
-        :return: Nothing
-        """
-        self.Logger.info("Populate symbols with dividents")
-        try:
-            self.Logger.debug(f'update stats for {tickers}')
-            upd = self.Symbols if not tickers else tickers
-            for stock, data in upd.items():
-                uri = f'{app.BASE_API_URL}stock/{stock}/dividends/{period}'
-                data['dividends'] = self.load_from_iex(uri)
-                app.remove_empty_strings(data)
-        except Exception as e:
-            message = f'Failed while retrieving dividends for tickers {tickers}!'
-            ex = app.AppException(e, message)
-            raise ex
-
-    def get_company(self, Symbols: dict = {}):
-        """
-        Will return companies according to the stocks or all stocks.
-        https://github.com/petelind/ConsumingAPI/issues/2
-        """
-        # if noone symbol is not provided, default set of symbols(all) will be used
-        Symbols = self.Symbols if not Symbols else Symbols
-        try:
-            # company_list = []
-            for symbol, symbol_data in Symbols.items():
-                self.Logger.debug(f'Update {symbol} symbol with company info.')
-                uri = f'{app.BASE_API_URL}stock/{symbol}/company'
-                company_info = self.load_from_iex(uri)
-            # poppulate with company info
-                symbol_data.update(company=company_info)
-                app.remove_empty_strings(symbol_data)
-            return Symbols
-        except Exception as e:
-            message = 'Failed while retrieving companies!'
-            ex = app.AppException(e, message)
-            raise ex
-
-    def get_financials(self, symbols: dict = {}):
-        """
-        Will return financials data (either all, or for given ticker).
-        :type symbols: company symbols data structure to get financials for
-        :return: symbols data structure updated with financials
-        """
-
-        symbols = self.Symbols if not symbols else symbols
-        self.Logger.info("Populate symbols with financials")
-        for symbol, data in symbols.items():
-            try:
-                self.Logger.debug(f'Updating {symbol} symbol with financials.')
-                uri = f'{app.BASE_API_URL}stock/{symbol}/financials/'
-                data["financials"] = self.load_from_iex(uri)["financials"]
-                app.remove_empty_strings(data)
-
-            except (KeyError, TypeError):
-                # Some symbols don't have financial info associated, so skipping
-                continue
-
-            except Exception as e:
-                message = 'Failed while retrieving financials!'
-                ex = app.AppException(e, message)
-                raise ex
-
-        return symbols
-
     @app.retry(app.AppException, logger=app.get_logger(__name__))
+    @app.deco_dict_cleanup
     def load_from_iex(self, uri: str):
         """
         Connects to the specified IEX endpoint and gets the data you requested.
@@ -278,7 +133,8 @@ class Iex(object):
                 f'types={types}&range=1m&last=5'
             ).encode('utf8')
 
-            result = app.remove_empty_strings(self.load_from_iex(uri))
+
+            result = self.load_from_iex(uri)
             if result:
                 [symbols[key].update(val) for key, val in result.items()]
 

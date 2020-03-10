@@ -116,7 +116,7 @@ class TestDynamoStore(TestCase):
         ref_dict = self.read_fixture('tests/fixtures/ref_dict.json')
 
         # ACT
-        res_dict = app.remove_empty_strings(dict_to_clean=src_dict)
+        res_dict = app.remove_empty_strings(src_dict)
 
         # ASSERT
         self.assertDictEqual(res_dict, ref_dict, f'Result dict and reference dict are different.')
@@ -126,21 +126,11 @@ class TestDynamoStore(TestCase):
         src_dict = self.read_fixture('tests/fixtures/companies_dump.json')
 
         # ACT
-        res_dict = app.remove_empty_strings(dict_to_clean=src_dict)
+        res_dict = app.remove_empty_strings(src_dict)
 
         # ASSERT
         dict_has_empty_values = self.has_empty_value_in_dict(res_dict)
         self.assertFalse(dict_has_empty_values, f"Result dict shouldn't have empty values")
-
-    def test_remove_empty_strings_PassEmptyDict_ExpectWarningAndReturnNothing(self):
-        # ARRANGE
-        src_dict = {}
-
-        # ACT
-        res_dict = app.remove_empty_strings(dict_to_clean=src_dict)
-
-        # ASSERT
-        self.assertEqual(res_dict, None, f"Function should return empty value.")
 
     def read_fixture(self, file: str):
         with open(file, mode='r') as companies_file:

@@ -68,6 +68,32 @@ def get_logger(module_name: str, level: str = logging.INFO):
         logger.addHandler(handler)
     return logger
 
+def check_func(val):
+    if val in [[], {}]:
+        return False
+    elif remove_empty_strings(val) not in [None, [], {}]:
+        return True
+
+# Function to search in nested dict:
+def remove_empty_strings(dictionary):
+    if type(dictionary) == list:
+        return [
+            remove_empty_strings(val)
+            for val in dictionary
+            if check_func(val)]
+    elif type(dictionary) == dict:
+        return {
+            key: remove_empty_strings(val)
+            for key, val in dictionary.items()
+            if check_func(val)}
+    elif dictionary or dictionary is False or dictionary == 0:
+        return dictionary
+
+def deco_dict_cleanup(f):
+    @wraps(f)
+    def f_dict_cleanup(*args, **kwargs):
+        return remove_empty_strings(f(*args, **kwargs))
+    return f_dict_cleanup
 def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
     """
     Retry calling the decorated function using an exponential backoff.
@@ -103,46 +129,3 @@ def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
         return f_retry  # true decorator
 
     return deco_retry
-
-
-def remove_empty_strings(dict_to_clean: dict):
-    """
-    The method removes all the empty key+value pairs from the dict
-    you give it. The method is used to clean up dicts before
-    persisting them to the DynamoDB.
-    :param dict_to_clean: as dict()
-    :return: only non-empty key+value pairs from the source dict as dict()
-    """
-    if not dict_to_clean:
-        return None
-
-    try:
-
-        def check_func(val):
-            if val in [[], {}]:
-                return False
-            elif delete_keys_from_dict(val) not in [None, [], {}]:
-                return True
-
-        # Function to search in nested dict:
-        def delete_keys_from_dict(dictionary):
-            if type(dictionary) == list:
-                return [
-                    delete_keys_from_dict(val)
-                    for val in dictionary
-                    if check_func(val)]
-            elif type(dictionary) == dict:
-                return {
-                    key: delete_keys_from_dict(val)
-                    for key, val in dictionary.items()
-                    if check_func(val)}
-            elif dictionary or dictionary is False or dictionary == 0:
-                return dictionary
-
-        res_dict = delete_keys_from_dict(dict_to_clean)
-        return res_dict
-
-    except Exception as e:
-        message = 'Failed while cleaning dict for key-value empty pairs!'
-        ex = AppException(e, message)
-        raise ex
