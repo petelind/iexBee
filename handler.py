@@ -13,7 +13,7 @@ def lambda_handler(event=None, context=None):
         start_time = datetime.now()
 
         datasource = Iex(app.STOCKS)
-        dynamostore = DynamoStore('IEXsnapshot')
+        dynamostore = DynamoStore(app.TABLE)
         dynamostore.store_documents(datasource.get_symbols())
 
         end_time = datetime.now()

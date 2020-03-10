@@ -20,10 +20,24 @@ STOCKS = {}
 
 if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
-    STOCKS = {'A': {'symbol': 'A'}, 'AA': {'symbol': 'AA'}, 'AAAU': {'symbol': 'AAAU'}}
+    STOCKS = {  'ALTM': {'symbol': 'ALTM'}, 
+                'AVTR-A': {'symbol': 'AVTR-A'}, 
+                'RNR-C*': {'symbol': 'RNR-C*'},
+                'STT-C*': {'symbol': 'STT-C*'}, 
+                'SFB': {'symbol': 'SFB'},
+                'CTRN': {'symbol': 'CTRN'},
+                'CTR': {'symbol': 'CTR'},
+                'CBO': {'symbol': 'CBO'},
+                'CBX': {'symbol': 'CBX'},
+                'BFYT': {'symbol': 'BFYT'},
+                'DFNS=': {'symbol': 'DFNS='},
+                'NTEST.A': {'symbol': 'NTEST.A'},
+                'NTEST.B': {'symbol': 'NTEST.B'},
+                'NONE': {'symbol': 'NONE'}
+             }
 
 REGION = os.getenv('REGION')
-TABLE = os.getenv('TABLE')
+TABLE = os.getenv('TABLE', 'IexSnapshot')
 
 
 class ActionStatus(Enum):
