@@ -68,7 +68,7 @@ class Iex(object):
             for stock, data in upd.items():
                 uri = (f'{app.BASE_API_URL}'
                        f'stock/{stock}/'
-                       f'advanced-stats/?{app.API_TOKEN}')
+                       f'advanced-stats/')
                 result = self.load_from_iex(uri=uri)
                 self.Logger.debug(
                     f'advanced stats for {stock} is {result}')
@@ -95,7 +95,7 @@ class Iex(object):
             [
                 symbol_data.update(
                   book=app.remove_empty_strings(self.load_from_iex(
-                    f'{app.BASE_API_URL}stock/{symbol}/cash-flow/?{app.API_TOKEN}'
+                    f'{app.BASE_API_URL}stock/{symbol}/cash-flow/'
                   ))
                 ) for symbol, symbol_data in symbols.items()
             ]
@@ -117,7 +117,7 @@ class Iex(object):
             [
                 symbol_data.update(
                   book=app.remove_empty_strings(self.load_from_iex(
-                    f'{app.BASE_API_URL}stock/{symbol}/book/?{app.API_TOKEN}'
+                    f'{app.BASE_API_URL}stock/{symbol}/book/'
                   ))
                 ) for symbol, symbol_data in symbols.items()
             ]
@@ -134,7 +134,7 @@ class Iex(object):
         """
         try:
             # basically we create a market snapshot
-            uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/?{app.API_TOKEN}'
+            uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/'
             [
                 self.dict_symbols.update(
                     {stock.get("symbol"): app.remove_empty_strings(stock)}
@@ -159,7 +159,7 @@ class Iex(object):
             self.Logger.debug(f'update stats for {tickers}')
             upd = self.Symbols if not tickers else tickers
             for stock, data in upd.items():
-                uri = f'{app.BASE_API_URL}stock/{stock}/dividends/{period}?{app.API_TOKEN}'
+                uri = f'{app.BASE_API_URL}stock/{stock}/dividends/{period}'
                 data['dividends'] = self.load_from_iex(uri)
                 app.remove_empty_strings(data)
         except Exception as e:
@@ -178,7 +178,7 @@ class Iex(object):
             # company_list = []
             for symbol, symbol_data in Symbols.items():
                 self.Logger.debug(f'Update {symbol} symbol with company info.')
-                uri = f'{app.BASE_API_URL}stock/{symbol}/company?{app.API_TOKEN}'
+                uri = f'{app.BASE_API_URL}stock/{symbol}/company'
                 company_info = self.load_from_iex(uri)
             # poppulate with company info
                 symbol_data.update(company=company_info)
@@ -201,7 +201,7 @@ class Iex(object):
         for symbol, data in symbols.items():
             try:
                 self.Logger.debug(f'Updating {symbol} symbol with financials.')
-                uri = f'{app.BASE_API_URL}stock/{symbol}/financials/?{app.API_TOKEN}'
+                uri = f'{app.BASE_API_URL}stock/{symbol}/financials/'
                 data["financials"] = self.load_from_iex(uri)["financials"]
                 app.remove_empty_strings(data)
 
@@ -225,7 +225,8 @@ class Iex(object):
         """
         try:
             self.Logger.info(f'Now retrieveing from {uri}')
-            response = requests.get(uri)
+            params = {'token': app.API_TOKEN}
+            response = requests.get(url=uri, params=params)
             response.raise_for_status()
             company_info = response.json(parse_float=Decimal)
             self.Logger.debug(f'Got response: {company_info}')
@@ -274,7 +275,7 @@ class Iex(object):
             )
             uri = (
                 f'{app.BASE_API_URL}stock/market/batch?symbols={tickers}&'
-                f'types={types}&range=1m&last=5&{app.API_TOKEN}'
+                f'types={types}&range=1m&last=5'
             ).encode('utf8')
 
             result = app.remove_empty_strings(self.load_from_iex(uri))
