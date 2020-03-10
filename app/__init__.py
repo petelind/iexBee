@@ -12,7 +12,7 @@ from collections.abc import MutableMapping
 
 
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
-API_TOKEN = f"?token={os.getenv('API_TOKEN')}"
+API_TOKEN = f"token={os.getenv('API_TOKEN')}"
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
 DYNAMO_URI = os.getenv('DYNAMO_URI', None)
@@ -20,20 +20,20 @@ STOCKS = {}
 
 if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
-    STOCKS = {  'ALTM': {'symbol': 'ALTM'}, 
-                'AVTR-A': {'symbol': 'AVTR-A'}, 
-                'RNR-C*': {'symbol': 'RNR-C*'},
-                'STT-C*': {'symbol': 'STT-C*'}, 
-                'SFB': {'symbol': 'SFB'},
-                'CTRN': {'symbol': 'CTRN'},
-                'CTR': {'symbol': 'CTR'},
-                'CBO': {'symbol': 'CBO'},
-                'CBX': {'symbol': 'CBX'},
-                'BFYT': {'symbol': 'BFYT'},
-                'DFNS=': {'symbol': 'DFNS='},
-                'NTEST.A': {'symbol': 'NTEST.A'},
-                'NTEST.B': {'symbol': 'NTEST.B'},
-                'NONE': {'symbol': 'NONE'}
+    STOCKS = {  'ALTM': {'symbol': 'ALTM', 'date': '2020-03-10'}, 
+                'AVTR-A': {'symbol': 'AVTR-A', 'date': '2020-03-10'}, 
+                'RNR-C*': {'symbol': 'RNR-C*', 'date': '2020-03-10'},
+                'STT-C*': {'symbol': 'STT-C*', 'date': '2020-03-10'}, 
+                'SFB': {'symbol': 'SFB', 'date': '2020-03-10'},
+                'CTRN': {'symbol': 'CTRN', 'date': '2020-03-10'},
+                'CTR': {'symbol': 'CTR', 'date': '2020-03-10'},
+                'CBO': {'symbol': 'CBO', 'date': '2020-03-10'},
+                'CBX': {'symbol': 'CBX', 'date': '2020-03-10'},
+                'BFYT': {'symbol': 'BFYT', 'date': '2020-03-10'},
+                'DFNS=': {'symbol': 'DFNS=', 'date': '2020-03-10'},
+                'NTEST.A': {'symbol': 'NTEST.A', 'date': '2020-03-10'},
+                'NTEST.B': {'symbol': 'NTEST.B', 'date': '2020-03-10'},
+                'NONE': {'symbol': 'NONE', 'date': '2020-03-10'}
              }
 
 REGION = os.getenv('REGION')
@@ -119,7 +119,9 @@ def remove_empty_strings(dict_to_clean: dict):
     try:
 
         def check_func(val):
-            if delete_keys_from_dict(val) not in [None, [], {}]:
+            if val in [[], {}]:
+                return False
+            elif delete_keys_from_dict(val) not in [None, [], {}]:
                 return True
 
         # Function to search in nested dict:
