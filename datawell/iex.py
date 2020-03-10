@@ -10,14 +10,12 @@ from itertools import islice
 
 def split_request(func):
     def batch_wrapper(self, symbols, datapoints):
-        ticker_chunk = 2
-        datapoint_chunk = 2
+        ticker_chunk = 100
+        datapoint_chunk = 10
         split_symbols = split_dict(symbols, ticker_chunk)
         split_datapoints = split_list(datapoints, datapoint_chunk)
-        #[func(self, symbols, datapoints) for datapoints in split_datapoints for symbols in split_symbols]
         for symbols in split_symbols:
             for datapoints in split_datapoints:
-                #print(f'Symbols {symbols} for {datapoints}')
                 func(self, symbols, datapoints)
 
     def split_dict(data, size):
@@ -38,15 +36,17 @@ class Iex(object):
         self.Logger = app.get_logger(__name__)
         self.Symbols = symbols if symbols else self.get_stocks()
         # now takes too long time - that was the idea :)
-        self.get_astats()
-        self.populate_dividends()
-        self.get_company()
-        self.get_financials()
-        self.get_cash_flow()
-        self.get_books()
-        # self.get_symbols_batch(self.Symbols, ['advanced-stats','cash-flow','book','dividends','company','financials'])
-        datapoints = ['logo', 'company']
-        self.Datapoints = dict(zip(datapoints, datapoints))
+        # self.get_astats()
+        # self.populate_dividends()
+        # self.get_company()
+        # self.get_financials()
+        # self.get_cash_flow()
+        # self.get_books()
+        self.datapoints = [
+            'advanced-stats', 'cash-flow', 'book',
+            'dividends', 'company', 'financials'
+        ]
+        self.get_symbols_batch(self.Symbols, self.datapoints)
 
     def get_symbols(self):
         return self.Symbols.values()
@@ -201,7 +201,7 @@ class Iex(object):
         for symbol, data in symbols.items():
             try:
                 self.Logger.debug(f'Updating {symbol} symbol with financials.')
-                uri = f'{app.BASE_API_URL}stock/{symbol}/financials/{app.API_TOKEN}'
+                uri = f'{app.BASE_API_URL}stock/{symbol}/financials/?{app.API_TOKEN}'
                 data["financials"] = self.load_from_iex(uri)["financials"]
                 app.remove_empty_strings(data)
 
@@ -266,8 +266,14 @@ class Iex(object):
             types = array_to_string(datapoints)
 
             self.Logger.info("Populate symbols with whole data set.")
-            self.Logger.debug(f'Following tickers: {tickers} will be populated with data from endpoints: {datapoints}.')
-            uri = f'{app.BASE_API_URL}stock/market/batch?symbols={tickers}&types={types}&range=1m&last=5&{app.API_TOKEN}'
+            self.Logger.debug(
+                f'Following tickers: {tickers}'
+                f'will be populated with data from endpoints: {datapoints}.'
+            )
+            uri = (
+                f'{app.BASE_API_URL}stock/market/batch?symbols={tickers}&'
+                f'types={types}&range=1m&last=5&{app.API_TOKEN}'
+            )
 
             result = self.load_from_iex(uri)
             [symbols[key].update(val) for key, val in result.items()]
