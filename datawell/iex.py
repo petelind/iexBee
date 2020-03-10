@@ -275,10 +275,11 @@ class Iex(object):
             uri = (
                 f'{app.BASE_API_URL}stock/market/batch?symbols={tickers}&'
                 f'types={types}&range=1m&last=5&{app.API_TOKEN}'
-            )
+            ).encode('utf8')
 
             result = self.load_from_iex(uri)
-            [symbols[key].update(val) for key, val in result.items()]
+            if result:
+                [symbols[key].update(val) for key, val in result.items()]
 
         except Exception as e:
             message = 'Failed while retrieving batch request data!'
