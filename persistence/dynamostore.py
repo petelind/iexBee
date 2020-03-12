@@ -92,7 +92,7 @@ class DynamoStore:
                 'MaxAttempts': 10
             }
         )
-
+    @app.batchify(param_to_slice='documents', size=20)
     def store_documents(self, documents: list):
         """
         Persists list of dict() provided into the Dynamo table of the repo
