@@ -77,7 +77,7 @@ class Iex(object):
                 raise e
 
     @app.batchify(param_to_slice='datapoints', size=10)
-    @app.batchify(param_to_slice='symbols', size=100)
+    @app.batchify(param_to_slice='symbols', size=400)
     def get_symbols_batch(self, symbols: dict, datapoints: list):
         """
         Updates Symbols dict with specified datapoints.
