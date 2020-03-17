@@ -105,6 +105,8 @@ def batchify(param_to_slice, size):
         elif type(data) == list:
             for i in range(0, len(data), size):
                 yield data[i:i+size]
+        else:
+            raise AppException(TypeError, message=f'Can not slice over {type(data)}')
 
     def deco_batchify(f):
         #@wraps(f)
