@@ -42,7 +42,7 @@ class Iex(object):
         self.get_symbols_batch(self.Symbols, self.datapoints)
 
     def get_symbols(self):
-        return self.Symbols.values()
+        return list(self.Symbols.values())
 
     def __format__(self, format):
         return "\n".join(f"symbol {s} with data {d}"

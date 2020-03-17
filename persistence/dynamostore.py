@@ -100,7 +100,8 @@ class DynamoStore:
         :return: ActionStatus with SUCCESS when stored successfully,
             ERROR if failed, AppException if AWS Error: No access etc
         """
-        self.Logger.info(f'Writing into dynamodb')
+        ticks = [ d['symbol'] for d in documents ]
+        self.Logger.info(f'Writing batch of {ticks} into dynamodb')
         with self.table.batch_writer() as batch:
             for r in documents:
                 self.Logger.debug(f'put into dynamodb {r}')

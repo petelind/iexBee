@@ -24,6 +24,7 @@ jobs:
             --table-name $TABLE
         env: 
           TEST_ENVIRONMENT: 'True'
+          TEST_STOCKS: 'True'
           TABLE: 'TestIexSnapshot'
           API_TOKEN: ${{ secrets.API_TOKEN }}
           AWS_DEFAULT_REGION: us-east-1

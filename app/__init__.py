@@ -20,6 +20,8 @@ STOCKS = {}
 
 if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
+
+if os.getenv('TEST_STOCKS', 'False') == 'True':
     STOCKS = {  'ALTM': {'symbol': 'ALTM', 'date': '2020-03-10'}, 
                 'AVTR-A': {'symbol': 'AVTR-A', 'date': '2020-03-10'}, 
                 'RNR-C*': {'symbol': 'RNR-C*', 'date': '2020-03-10'},
