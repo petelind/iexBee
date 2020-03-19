@@ -113,11 +113,12 @@ def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
     def deco_retry(f):
 
         @wraps(f)
-        def f_retry(*args, **kwargs):
+        def f_retry(self, *args, **kwargs):
+            self.Logger.setLevel(self.log_level)
             mtries, mdelay = tries, delay
             while mtries > 1:
                 try:
-                    return f(*args, **kwargs)
+                    return f(self, *args, **kwargs)
                 except exceptions as e:
                     msg = f'{e}, Retrying in {mdelay} seconds...'
                     if logger:
@@ -136,23 +137,19 @@ def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
 def func_time(logger=None):
     """
     Decorator. Measures function execution time.
-
     logger: Logger to use. If None, print.
     """
 
     def deco_func_time(func):
         @wraps(func)
-        def time_measure(*args, **kwargs):
+        def time_measure(self, *args, **kwargs):
+            self.Logger.setLevel(self.log_level)
             start = int(round(time.time() * 1000))
             try:
-                return func(*args, **kwargs)
+                return func(self, *args, **kwargs)
             finally:
                 end = int(round(time.time() * 1000)) - start
-                log_string = f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms"
-                if logger:
-                    logger.info(log_string)
-                else:
-                    print(log_string)
+                logger.debug(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms")
         return time_measure
 
     return deco_func_time

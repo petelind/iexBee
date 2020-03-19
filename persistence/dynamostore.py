@@ -1,12 +1,14 @@
 from datetime import datetime
 import boto3
 import app
+import logging
 from boto3.dynamodb.conditions import Key
 
 
 class DynamoStore:
-    def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol"):
-        self.Logger = app.get_logger(__name__)
+    def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol", log_level=logging.INFO):
+        self.log_level = log_level
+        self.Logger = app.get_logger(__name__, level=self.log_level)
         # Initialize both client and resource along with the class for usage in methods
         self.dynamo_client = boto3.client(
             'dynamodb',

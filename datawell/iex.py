@@ -5,6 +5,7 @@ Contains Iex class which retrieves information from IEX API
 from decimal import Decimal
 import requests
 import app
+import logging
 from itertools import islice
 
 
@@ -31,9 +32,10 @@ def split_request(func):
 
 class Iex(object):
 
-    def __init__(self, symbols: dict = {} ):
+    def __init__(self, symbols: dict = {}, log_level=logging.INFO):
+        self.log_level = log_level
         self.dict_symbols = {}
-        self.Logger = app.get_logger(__name__)
+        self.Logger = app.get_logger(__name__, level=self.log_level)
         self.Symbols = symbols if symbols else self.get_stocks()
         self.datapoints = [
             'advanced-stats', 'cash-flow', 'book',
@@ -98,8 +100,8 @@ class Iex(object):
                     f'( {response.text} ) while retrieving {uri}')
                 raise e
     
-    @app.func_time(logger=app.get_logger(__name__))
     @split_request
+    @app.func_time(logger=app.get_logger(__name__))
     def get_symbols_batch(self, symbols: dict, datapoints: list):
         """
         Updates Symbols dict with specified datapoints.
