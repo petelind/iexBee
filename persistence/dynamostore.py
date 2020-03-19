@@ -24,6 +24,7 @@ class DynamoStore:
             self.Logger.info(f'Table {table_name} doesn\'t exist.')
             self.create_table(table_name, part_key, sort_key)
 
+    @app.func_time(logger=app.get_logger(__name__))
     def create_table(self, table_name, part_key: str, sort_key: str):
         """
         Creates DynamoDB table with given keys
@@ -93,6 +94,7 @@ class DynamoStore:
             }
         )
 
+    @app.func_time(logger=app.get_logger(__name__))
     def store_documents(self, documents: list):
         """
         Persists list of dict() provided into the Dynamo table of the repo
@@ -108,6 +110,7 @@ class DynamoStore:
                 batch.put_item(Item=r)
         return True
 
+    @app.func_time(logger=app.get_logger(__name__))
     def clean_table(self, symbols_to_remove: list):
         """
         Use this one to either clean specific stocks from the db or delete the table if symbols_to_remove is empty.
@@ -132,7 +135,8 @@ class DynamoStore:
             message = 'Failed to clean table'
             ex = app.AppException(e, message)
             raise ex
-
+    
+    @app.func_time(logger=app.get_logger(__name__))
     def get_filtered_documents(self, symbol_to_find: str = None, target_date: datetime.date = None):
         """
         Returns a list of documents matching given ticker and/or date
