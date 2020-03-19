@@ -131,3 +131,27 @@ def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
         return f_retry  # true decorator
 
     return deco_retry
+
+def func_time(logger=None):
+    """
+    Decorator. Measures function execution time.
+
+    logger: Logger to use. If None, print.
+    """
+
+    def deco_func_time(func):
+        @wraps(func)
+        def time_measure(*args, **kwargs):
+            start = int(round(time.time() * 1000))
+            try:
+                return func(*args, **kwargs)
+            finally:
+                end = int(round(time.time() * 1000)) - start
+                log_string = f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms"
+                if logger:
+                    logger.info(log_string)
+                else:
+                    print(log_string)
+        return time_measure
+
+    return deco_func_time
