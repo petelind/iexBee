@@ -1,12 +1,13 @@
 from datetime import datetime
+import logging
 import boto3
 import app
 from boto3.dynamodb.conditions import Key
 
 
 class DynamoStore:
-    def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol"):
-        self.Logger = app.get_logger(__name__)
+    def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol", logger=None):
+        self.Logger = logger
         # Initialize both client and resource along with the class for usage in methods
         self.dynamo_client = boto3.client(
             'dynamodb',
@@ -24,7 +25,7 @@ class DynamoStore:
             self.Logger.info(f'Table {table_name} doesn\'t exist.')
             self.create_table(table_name, part_key, sort_key)
 
-    @app.func_time(logger=app.get_logger(__name__))
+    @app.func_time
     def create_table(self, table_name, part_key: str, sort_key: str):
         """
         Creates DynamoDB table with given keys
@@ -94,7 +95,7 @@ class DynamoStore:
             }
         )
 
-    @app.func_time(logger=app.get_logger(__name__))
+    @app.func_time
     def store_documents(self, documents: list):
         """
         Persists list of dict() provided into the Dynamo table of the repo
@@ -110,7 +111,7 @@ class DynamoStore:
                 batch.put_item(Item=r)
         return True
 
-    @app.func_time(logger=app.get_logger(__name__))
+    @app.func_time
     def clean_table(self, symbols_to_remove: list):
         """
         Use this one to either clean specific stocks from the db or delete the table if symbols_to_remove is empty.
@@ -136,7 +137,7 @@ class DynamoStore:
             ex = app.AppException(e, message)
             raise ex
     
-    @app.func_time(logger=app.get_logger(__name__))
+    @app.func_time
     def get_filtered_documents(self, symbol_to_find: str = None, target_date: datetime.date = None):
         """
         Returns a list of documents matching given ticker and/or date

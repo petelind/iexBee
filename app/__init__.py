@@ -97,7 +97,7 @@ def deco_dict_cleanup(f):
     def f_dict_cleanup(*args, **kwargs):
         return remove_empty_strings(f(*args, **kwargs))
     return f_dict_cleanup
-def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
+def retry(exceptions, tries=4, delay=3, backoff=2):
     """
     Retry calling the decorated function using an exponential backoff.
 
@@ -113,17 +113,13 @@ def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
     def deco_retry(f):
 
         @wraps(f)
-        def f_retry(*args, **kwargs):
+        def f_retry(self, *args, **kwargs):
             mtries, mdelay = tries, delay
             while mtries > 1:
                 try:
-                    return f(*args, **kwargs)
+                    return f(self, *args, **kwargs)
                 except exceptions as e:
-                    msg = f'{e}, Retrying in {mdelay} seconds...'
-                    if logger:
-                        logger.warning(msg)
-                    else:
-                        print(msg)
+                    self.Logger.warning(f'{e}, Retrying in {mdelay} seconds...')
                     time.sleep(mdelay)
                     mtries -= 1
                     mdelay *= backoff
@@ -133,26 +129,13 @@ def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
 
     return deco_retry
 
-def func_time(logger=None):
-    """
-    Decorator. Measures function execution time.
-
-    logger: Logger to use. If None, print.
-    """
-
-    def deco_func_time(func):
-        @wraps(func)
-        def time_measure(*args, **kwargs):
-            start = int(round(time.time() * 1000))
-            try:
-                return func(*args, **kwargs)
-            finally:
-                end = int(round(time.time() * 1000)) - start
-                log_string = f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms"
-                if logger:
-                    logger.info(log_string)
-                else:
-                    print(log_string)
-        return time_measure
-
-    return deco_func_time
+def func_time(func):
+    @wraps(func)
+    def time_measure(self, *args, **kwargs):
+        start = int(round(time.time() * 1000))
+        try:
+            return func(self,*args, **kwargs)
+        finally:
+            end = int(round(time.time() * 1000)) - start
+            self.Logger.info(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms")
+    return time_measure
