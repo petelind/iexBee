@@ -3,7 +3,6 @@ Contains Iex class which retrieves information from IEX API
 """
 
 from decimal import Decimal
-import logging
 import requests
 import app
 from itertools import islice
@@ -32,10 +31,9 @@ def split_request(func):
 
 class Iex(object):
 
-    def __init__(self, symbols: dict = {}, logger=None):
-        self.Logger = logger
+    def __init__(self, symbols: dict = {} ):
         self.dict_symbols = {}
-        self.Logger = logger
+        self.Logger = app.get_logger(__name__)
         self.Symbols = symbols if symbols else self.get_stocks()
         self.datapoints = [
             'advanced-stats', 'cash-flow', 'book',
@@ -50,7 +48,7 @@ class Iex(object):
         return "\n".join(f"symbol {s} with data {d}"
                          for s, d in self.Symbols.items() or {})
 
-    @app.func_time
+    @app.func_time(logger=app.get_logger(__name__))
     def get_stocks(self):
         """
         Will return all the stocks being traded on IEX.
@@ -72,9 +70,9 @@ class Iex(object):
             ex = app.AppException(e, message)
             raise ex
     
-    @app.retry(exceptions=app.AppException)
+    @app.retry(app.AppException, logger=app.get_logger(__name__))
     @app.deco_dict_cleanup
-    @app.func_time
+    @app.func_time(logger=app.get_logger(__name__))
     def load_from_iex(self, uri: str):
         """
         Connects to the specified IEX endpoint and gets the data you requested.
@@ -100,8 +98,8 @@ class Iex(object):
                     f'( {response.text} ) while retrieving {uri}')
                 raise e
     
+    @app.func_time(logger=app.get_logger(__name__))
     @split_request
-    @app.func_time
     def get_symbols_batch(self, symbols: dict, datapoints: list):
         """
         Updates Symbols dict with specified datapoints.

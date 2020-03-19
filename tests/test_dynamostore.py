@@ -7,13 +7,12 @@ from boto3.dynamodb.conditions import Key
 from collections.abc import MutableMapping
 import boto3
 import app
-import logging
 
 table_name = 'CompaniesIntegrationTesting'
 dynamo_db_client = boto3.client('dynamodb', endpoint_url=app.DYNAMO_URI)
 dynamo_db_resource = boto3.resource('dynamodb', endpoint_url=app.DYNAMO_URI)
 dynamo_db_table = dynamo_db_resource.Table(table_name)
-dynamo_store = DynamoStore(table_name=table_name, logger=app.get_logger(module_name=__name__, level=logging.INFO))
+dynamo_store = DynamoStore(table_name=table_name)
 
 class TestDynamoStore(TestCase):
 
