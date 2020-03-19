@@ -8,12 +8,13 @@ from persistence.dynamostore import DynamoStore
 
 
 def lambda_handler(event=None, context=None):
-    logger = app.get_logger(module_name=__name__, level=logging.INFO)
+    log_level = logging.INFO
+    logger = app.get_logger(module_name=__name__, level=log_level)
     try:
         start_time = datetime.now()
 
-        datasource = Iex(app.STOCKS)
-        dynamostore = DynamoStore(app.TABLE)
+        datasource = Iex(app.STOCKS, log_level)
+        dynamostore = DynamoStore(app.TABLE, log_level)
         dynamostore.store_documents(datasource.get_symbols())
 
         end_time = datetime.now()
