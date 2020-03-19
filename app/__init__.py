@@ -35,7 +35,8 @@ if os.getenv('TEST_STOCKS', 'False') == 'True':
                 'DFNS=': {'symbol': 'DFNS=', 'date': '2020-03-10'},
                 'NTEST.A': {'symbol': 'NTEST.A', 'date': '2020-03-10'},
                 'NTEST.B': {'symbol': 'NTEST.B', 'date': '2020-03-10'},
-                'NONE': {'symbol': 'NONE', 'date': '2020-03-10'}
+                'NONE': {'symbol': 'NONE', 'date': '2020-03-10'},
+                'ARNC#': {'symbol': 'ARNC#', 'date': '2020-03-10'}
              }
 
 REGION = os.getenv('REGION')
