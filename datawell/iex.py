@@ -7,6 +7,7 @@ import requests
 import app
 import logging
 from itertools import islice
+from urllib import parse
 
 
 def split_request(func):
@@ -25,7 +26,7 @@ def split_request(func):
             yield {k: data[k] for k in islice(it, size)}
 
     def split_list(data, size):
-        return [data[x:x+size] for x in range(0, len(data), size)]
+        return [data[x:x + size] for x in range(0, len(data), size)]
 
     return batch_wrapper
 
@@ -71,7 +72,7 @@ class Iex(object):
             message = 'Failed while retrieving stock list!'
             ex = app.AppException(e, message)
             raise ex
-    
+
     @app.retry(app.AppException, logger=app.get_logger(__name__))
     @app.deco_dict_cleanup
     @app.func_time(logger=app.get_logger(__name__))
@@ -99,7 +100,7 @@ class Iex(object):
                     f'Encountered an error: {response.status_code}'
                     f'( {response.text} ) while retrieving {uri}')
                 raise e
-    
+
     @split_request
     @app.func_time(logger=app.get_logger(__name__))
     def get_symbols_batch(self, symbols: dict, datapoints: list):
@@ -133,10 +134,9 @@ class Iex(object):
                 f'will be populated with data from endpoints: {datapoints}.'
             )
             uri = (
-                f'{app.BASE_API_URL}stock/market/batch?symbols={tickers}&'
-                f'types={types}&range=1m&last=5'
+                f'{app.BASE_API_URL}stock/market/batch?symbols={parse.quote(tickers)}&'
+                f'types={parse.quote(types)}&range=1m&last=5'
             ).encode('utf8')
-
 
             result = self.load_from_iex(uri)
             if result:

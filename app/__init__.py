@@ -22,22 +22,23 @@ if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
 
 if os.getenv('TEST_STOCKS', 'False') == 'True':
-    STOCKS = {  'ALTM': {'symbol': 'ALTM', 'date': '2020-03-10'}, 
-                'AVTR-A': {'symbol': 'AVTR-A', 'date': '2020-03-10'}, 
-                'RNR-C*': {'symbol': 'RNR-C*', 'date': '2020-03-10'},
-                'STT-C*': {'symbol': 'STT-C*', 'date': '2020-03-10'}, 
-                'SFB': {'symbol': 'SFB', 'date': '2020-03-10'},
-                'CTRN': {'symbol': 'CTRN', 'date': '2020-03-10'},
-                'CTR': {'symbol': 'CTR', 'date': '2020-03-10'},
-                'CBO': {'symbol': 'CBO', 'date': '2020-03-10'},
-                'CBX': {'symbol': 'CBX', 'date': '2020-03-10'},
-                'BFYT': {'symbol': 'BFYT', 'date': '2020-03-10'},
-                'DFNS=': {'symbol': 'DFNS=', 'date': '2020-03-10'},
-                'NTEST.A': {'symbol': 'NTEST.A', 'date': '2020-03-10'},
-                'NTEST.B': {'symbol': 'NTEST.B', 'date': '2020-03-10'},
-                'NONE': {'symbol': 'NONE', 'date': '2020-03-10'},
-                'ARNC#': {'symbol': 'ARNC#', 'date': '2020-03-10'}
-             }
+    STOCKS = {
+        'ALTM': {'symbol': 'ALTM', 'date': '2020-03-10'},
+        'AVTR-A': {'symbol': 'AVTR-A', 'date': '2020-03-10'},
+        'RNR-C*': {'symbol': 'RNR-C*', 'date': '2020-03-10'},
+        'STT-C*': {'symbol': 'STT-C*', 'date': '2020-03-10'},
+        'SFB': {'symbol': 'SFB', 'date': '2020-03-10'},
+        'CTRN': {'symbol': 'CTRN', 'date': '2020-03-10'},
+        'CTR': {'symbol': 'CTR', 'date': '2020-03-10'},
+        'CBO': {'symbol': 'CBO', 'date': '2020-03-10'},
+        'CBX': {'symbol': 'CBX', 'date': '2020-03-10'},
+        'BFYT': {'symbol': 'BFYT', 'date': '2020-03-10'},
+        'DFNS=': {'symbol': 'DFNS=', 'date': '2020-03-10'},
+        'NTEST.A': {'symbol': 'NTEST.A', 'date': '2020-03-10'},
+        'NTEST.B': {'symbol': 'NTEST.B', 'date': '2020-03-10'},
+        'NONE': {'symbol': 'NONE', 'date': '2020-03-10'},
+        'ARNC#': {'symbol': 'ARNC#', 'date': '2020-03-10'}
+    }
 
 REGION = os.getenv('REGION')
 TABLE = os.getenv('TABLE', 'IexSnapshot')
@@ -53,10 +54,12 @@ class Results:
         self.ActionStatus: ActionStatus = ActionStatus.ERROR
         self.Results = []
 
+
 class AppException(Exception):
     def __init__(self, ex, message="See exception for detailed message."):
         self.Exception = ex
         self.Message = message
+
 
 def get_logger(module_name: str, level: str = logging.INFO):
     logging.basicConfig(format='%(asctime)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s', datefmt='%d-%b-%y %H:%M:%S',
@@ -71,11 +74,13 @@ def get_logger(module_name: str, level: str = logging.INFO):
         logger.addHandler(handler)
     return logger
 
+
 def check_func(val):
     if val in [[], {}]:
         return False
     elif remove_empty_strings(val) not in [None, [], {}]:
         return True
+
 
 # Function to search in nested dict:
 def remove_empty_strings(dictionary):
@@ -92,11 +97,14 @@ def remove_empty_strings(dictionary):
     elif dictionary or dictionary is False or dictionary == 0:
         return dictionary
 
+
 def deco_dict_cleanup(f):
     @wraps(f)
     def f_dict_cleanup(*args, **kwargs):
         return remove_empty_strings(f(*args, **kwargs))
     return f_dict_cleanup
+
+
 def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
     """
     Retry calling the decorated function using an exponential backoff.
@@ -133,6 +141,7 @@ def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
         return f_retry  # true decorator
 
     return deco_retry
+
 
 def func_time(logger=None):
     """
