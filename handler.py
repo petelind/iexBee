@@ -13,8 +13,8 @@ def lambda_handler(event=None, context=None):
     try:
         start_time = datetime.now()
 
-        datasource = Iex(app.STOCKS, log_level)
-        dynamostore = DynamoStore(app.TABLE, log_level)
+        datasource = Iex(app.STOCKS, log_level=log_level)
+        dynamostore = DynamoStore(app.TABLE, log_level=log_level)
         dynamostore.store_documents(datasource.get_symbols())
 
         end_time = datetime.now()
@@ -23,5 +23,6 @@ def lambda_handler(event=None, context=None):
     except app.AppException as e:
         logger.error(e.Message, exc_info=True)
         os._exit(-1)  # please note: python has no encapsulation - you can call private methods! doesnt mean you should
+
 
 lambda_handler()

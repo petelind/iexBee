@@ -104,7 +104,7 @@ class DynamoStore:
         :return: ActionStatus with SUCCESS when stored successfully,
             ERROR if failed, AppException if AWS Error: No access etc
         """
-        ticks = [ d['symbol'] for d in documents ]
+        ticks = [d['symbol'] for d in documents]
         self.Logger.info(f'Writing batch of {ticks} into dynamodb')
         with self.table.batch_writer() as batch:
             for r in documents:
@@ -137,7 +137,7 @@ class DynamoStore:
             message = 'Failed to clean table'
             ex = app.AppException(e, message)
             raise ex
-    
+
     @app.func_time(logger=app.get_logger(__name__))
     def get_filtered_documents(self, symbol_to_find: str = None, target_date: datetime.date = None):
         """
