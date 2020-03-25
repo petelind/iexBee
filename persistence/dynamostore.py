@@ -1,12 +1,14 @@
 from datetime import datetime
 import boto3
 import app
+import logging
 from boto3.dynamodb.conditions import Key
 
 
 class DynamoStore:
-    def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol"):
-        self.Logger = app.get_logger(__name__)
+    def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol", log_level=logging.INFO):
+        self.log_level = log_level
+        self.Logger = app.get_logger(__name__, level=self.log_level)
         # Initialize both client and resource along with the class for usage in methods
         self.dynamo_client = boto3.client(
             'dynamodb',
@@ -24,6 +26,7 @@ class DynamoStore:
             self.Logger.info(f'Table {table_name} doesn\'t exist.')
             self.create_table(table_name, part_key, sort_key)
 
+    @app.func_time(logger=app.get_logger(__name__))
     def create_table(self, table_name, part_key: str, sort_key: str):
         """
         Creates DynamoDB table with given keys
@@ -92,7 +95,9 @@ class DynamoStore:
                 'MaxAttempts': 10
             }
         )
+
     @app.batchify(param_to_slice='documents', size=5)
+    @app.func_time(logger=app.get_logger(__name__))
     def store_documents(self, documents: list):
         """
         Persists list of dict() provided into the Dynamo table of the repo
@@ -100,7 +105,7 @@ class DynamoStore:
         :return: ActionStatus with SUCCESS when stored successfully,
             ERROR if failed, AppException if AWS Error: No access etc
         """
-        ticks = [ d['symbol'] for d in documents ]
+        ticks = [d['symbol'] for d in documents]
         self.Logger.info(f'Writing batch of {ticks} into dynamodb')
         with self.table.batch_writer() as batch:
             for r in documents:
@@ -108,6 +113,7 @@ class DynamoStore:
                 batch.put_item(Item=r)
         return True
 
+    @app.func_time(logger=app.get_logger(__name__))
     def clean_table(self, symbols_to_remove: list):
         """
         Use this one to either clean specific stocks from the db or delete the table if symbols_to_remove is empty.
@@ -133,6 +139,7 @@ class DynamoStore:
             ex = app.AppException(e, message)
             raise ex
 
+    @app.func_time(logger=app.get_logger(__name__))
     def get_filtered_documents(self, symbol_to_find: str = None, target_date: datetime.date = None):
         """
         Returns a list of documents matching given ticker and/or date
