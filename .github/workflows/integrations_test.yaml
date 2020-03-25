@@ -6,10 +6,19 @@ on:
       - v*
 
 jobs:
-  tests:
+  integration:
     runs-on: ubuntu-latest
     container:
       image: python:3.8-alpine
+    env: 
+      TEST_ENVIRONMENT: 'True'
+      TEST_STOCKS: 'True'
+      TABLE: 'TestIexSnapshot'
+      LAMBDA_NAME: 'TestLambda' 
+      API_TOKEN: 'Tsk_1dd47fce614e4d3a8e3957d89dcd5153'
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - name: checkout
         uses: actions/checkout@v1
@@ -22,11 +31,7 @@ jobs:
           python handler.py
           aws dynamodb delete-table \
             --table-name $TABLE
-        env: 
-          TEST_ENVIRONMENT: 'True'
-          TEST_STOCKS: 'True'
-          TABLE: 'TestIexSnapshot'
-          API_TOKEN: ${{ secrets.API_TOKEN }}
-          AWS_DEFAULT_REGION: us-east-1
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: zip package
+        run: zip -r iexbee.zip .
+      - name: deploy to lambda
+        run: aws lambda update-function-code --function-name $LAMBDA_NAME --zip-file iexbee.zip

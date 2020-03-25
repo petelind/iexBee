@@ -9,6 +9,7 @@ import time
 import decimal
 import json
 from collections.abc import MutableMapping
+from itertools import islice
 
 
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
@@ -97,13 +98,35 @@ def remove_empty_strings(dictionary):
     elif dictionary or dictionary is False or dictionary == 0:
         return dictionary
 
-
-def deco_dict_cleanup(f):
-    @wraps(f)
+def dict_cleanup(f):
+    #@wraps(f)
     def f_dict_cleanup(*args, **kwargs):
         return remove_empty_strings(f(*args, **kwargs))
     return f_dict_cleanup
 
+def batchify(param_to_slice, size):
+    def split(data, size):
+        if type(data) == dict:
+            it = iter(data)
+            for i in range(0, len(data), size):
+                yield {k: data[k] for k in islice(it, size)}
+        elif type(data) == list:
+            for i in range(0, len(data), size):
+                yield data[i:i+size]
+        else:
+            raise AppException(TypeError, message=f'Can not slice over {type(data)}')
+
+    def deco_batchify(f):
+        #@wraps(f)
+        def f_batchify(*args, **kwargs):
+            if param_to_slice not in kwargs:
+                raise AppException(message=f"Can not find param {param_to_slice} in kwargs", ex=Exception)
+            data = kwargs[param_to_slice]
+            for d in split(data,size):
+                kwargs[param_to_slice] = d
+                f(*args, **kwargs)
+        return f_batchify
+    return deco_batchify
 
 def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
     """
