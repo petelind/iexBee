@@ -54,7 +54,7 @@ class TestDynamoStore(TestCase):
                          'Item should exist before the deletion')
 
         # ACT:
-        dynamo_store.store_documents([serialized_doc])
+        dynamo_store.store_documents(documents=[serialized_doc])
         get_it_back = dynamo_db_table.query(
             IndexName='Reverse_index',
             KeyConditionExpression=Key('symbol').eq(symbol_to_load)

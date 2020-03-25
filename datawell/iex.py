@@ -6,29 +6,8 @@ from decimal import Decimal
 import requests
 import app
 import logging
-from itertools import islice
 from urllib import parse
 
-
-def split_request(func):
-    def batch_wrapper(self, symbols, datapoints):
-        ticker_chunk = 100
-        datapoint_chunk = 10
-        split_symbols = split_dict(symbols, ticker_chunk)
-        split_datapoints = split_list(datapoints, datapoint_chunk)
-        for symbols in split_symbols:
-            for datapoints in split_datapoints:
-                func(self, symbols, datapoints)
-
-    def split_dict(data, size):
-        it = iter(data)
-        for i in range(0, len(data), size):
-            yield {k: data[k] for k in islice(it, size)}
-
-    def split_list(data, size):
-        return [data[x:x + size] for x in range(0, len(data), size)]
-
-    return batch_wrapper
 
 
 class Iex(object):
@@ -42,7 +21,7 @@ class Iex(object):
             'advanced-stats', 'cash-flow', 'book',
             'dividends', 'company', 'financials'
         ]
-        self.get_symbols_batch(self.Symbols, self.datapoints)
+        self.get_symbols_batch(datapoints=self.datapoints,symbols=self.Symbols)
 
     def get_symbols(self):
         return list(self.Symbols.values())
@@ -74,7 +53,7 @@ class Iex(object):
             raise ex
 
     @app.retry(app.AppException, logger=app.get_logger(__name__))
-    @app.deco_dict_cleanup
+    @app.dict_cleanup
     @app.func_time(logger=app.get_logger(__name__))
     def load_from_iex(self, uri: str):
         """
@@ -100,7 +79,8 @@ class Iex(object):
                     f'( {response.text} ) while retrieving {uri}')
                 raise e
 
-    @split_request
+    @app.batchify(param_to_slice='datapoints', size=10)
+    @app.batchify(param_to_slice='symbols', size=400)
     @app.func_time(logger=app.get_logger(__name__))
     def get_symbols_batch(self, symbols: dict, datapoints: list):
         """
