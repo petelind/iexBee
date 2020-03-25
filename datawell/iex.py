@@ -22,7 +22,7 @@ def split_request(func):
 
     def split_dict(data, size):
         it = iter(data)
-        for i in range(0, len(data), size):
+        for _ in range(0, len(data), size):
             yield {k: data[k] for k in islice(it, size)}
 
     def split_list(data, size):
@@ -51,6 +51,36 @@ class Iex(object):
         return "\n".join(f"symbol {s} with data {d}"
                          for s, d in self.Symbols.items() or {})
 
+    def __make_uri(self, uri_special_bones):
+        """
+        The function is a local support function and it creates a list of 6 url encoded items.
+        The list changes into url string with function urlunparse
+        https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlunparse
+        return a list with 6 parts of url
+        """
+        # a default uri parts aka 'bones'
+        uri_bones_default = {
+            "scheme": f"{app.BASE_API_URL.split('://')[0]}",
+            "netloc": f"{app.BASE_API_URL.split('://')[1]}",
+            "path": "",
+            "params": {},
+            "query": {},
+            "fragment": ""
+        }
+        # add special part of a request
+        uri_bones = {**uri_bones_default, **uri_special_bones}
+        # add token to the result query
+        uri_bones["query"]["token"] = f"{app.API_TOKEN}"
+        uri_skeleton = [
+            uri_bones['scheme'],
+            uri_bones['netloc'],
+            uri_bones['path'],
+            parse.urlencode(uri_bones['params']),
+            parse.urlencode(uri_bones['query']),
+            uri_bones['fragment']
+        ]
+        return uri_skeleton
+
     @app.func_time(logger=app.get_logger(__name__))
     def get_stocks(self):
         """
@@ -60,11 +90,14 @@ class Iex(object):
         """
         try:
             # basically we create a market snapshot
-            uri = f'{app.BASE_API_URL}ref-data/Iex/symbols/'
+            # a dict of different than default parameters for a result uri in a readable format
+            uri_special_bones = {
+                "path": "/ref-data/Iex/symbols/"
+            }
             [
                 self.dict_symbols.update(
                     {stock.get("symbol"): app.remove_empty_strings(stock)}
-                ) for stock in self.load_from_iex(uri)
+                ) for stock in self.load_from_iex(self.__make_uri(uri_special_bones))
             ]
             return self.dict_symbols
 
@@ -76,13 +109,14 @@ class Iex(object):
     @app.retry(app.AppException, logger=app.get_logger(__name__))
     @app.deco_dict_cleanup
     @app.func_time(logger=app.get_logger(__name__))
-    def load_from_iex(self, uri: str):
+    def load_from_iex(self, uri_skeleton: list):
         """
         Connects to the specified IEX endpoint and gets the data you requested.
         :type uri: str with the endpoint to query
         :return Dict() with the answer from the endpoint, Exception otherwise
         """
         try:
+            uri = parse.urlunparse(uri_skeleton)
             self.Logger.info(f'Now retrieveing from {uri}')
             response = requests.get(url=uri)
             response.raise_for_status()
@@ -129,22 +163,6 @@ class Iex(object):
         def array_to_string(data):
             return ','.join([key for key in data]).lower()
 
-        def make_uri(url_bones):
-            """
-            The function is a local support function and it creates a list of 6 url encoded items.
-            The list changes into url string with function urlunparse
-            https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlunparse
-            """
-            url_list = [
-                url_bones['scheme'],
-                url_bones['netloc'],
-                url_bones['path'],
-                parse.urlencode(url_bones['params']),
-                parse.urlencode(url_bones['query']),
-                url_bones['fragment']
-            ]
-            return parse.urlunparse(url_list)
-
         try:
             symbols = self.Symbols if not symbols else symbols
             tickers = array_to_string(symbols)
@@ -155,22 +173,16 @@ class Iex(object):
                 f'Following tickers: {tickers}'
                 f'will be populated with data from endpoints: {types}.'
             )
-            url_bones = {
-                "scheme": f"{app.BASE_API_URL.split('://')[0]}",
-                "netloc": f"{app.BASE_API_URL.split('://')[1]}",
+            uri_special_bones = {
                 "path": "/stock/market/batch",
-                "params": "",
                 "query": {
                     "symbols": tickers,
                     "types": types,
                     "range": "1m",
-                    "last": 5,
-                    "token": f"{app.API_TOKEN}"
-                },
-                "fragment": ""
+                    "last": 5
+                }
             }
-            uri = make_uri(url_bones)
-            result = self.load_from_iex(uri)
+            result = self.load_from_iex(self.__make_uri(uri_special_bones))
             if result:
                 [symbols[key].update(val) for key, val in result.items()]
 
