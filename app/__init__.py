@@ -174,14 +174,13 @@ def func_time(logger=None):
 
     def deco_func_time(func):
         @wraps(func)
-        def time_measure(self, *args, **kwargs):
-            self.Logger.setLevel(self.log_level)
+        def time_measure(*args, **kwargs):
             start = int(round(time.time() * 1000))
             try:
-                return func(self, *args, **kwargs)
+                return func(*args, **kwargs)
             finally:
                 end = int(round(time.time() * 1000)) - start
-                logger.debug(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms")
+                logger.info(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms")
         return time_measure
 
     return deco_func_time
