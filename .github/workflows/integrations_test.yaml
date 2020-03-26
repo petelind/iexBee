@@ -36,4 +36,4 @@ jobs:
         with:
           args: zip -r iexbee.zip .
       - name: deploy to lambda
-        run: aws lambda update-function-code --function-name $LAMBDA_NAME --zip-file iexbee.zip
+        run: aws lambda update-function-code --function-name $LAMBDA_NAME --zip-file fileb://iexbee.zip
