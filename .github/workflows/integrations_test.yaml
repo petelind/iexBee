@@ -33,6 +33,8 @@ jobs:
           aws dynamodb delete-table \
             --table-name $TABLE
       - name: zip package
-        run: zip -r iexbee.zip .
+        uses: montudor/action-zip@v0.1.0
+        with:
+          args: zip -r iexbee.zip .
       - name: deploy to lambda
-        run: aws lambda update-function-code --function-name $LAMBDA_NAME --zip-file iexbee.zip
+        run: aws lambda update-function-code --function-name $LAMBDA_NAME --zip-file fileb://iexbee.zip
