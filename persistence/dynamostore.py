@@ -2,6 +2,7 @@ from datetime import datetime
 import boto3
 import app
 import logging
+from sys import getsizeof
 from boto3.dynamodb.conditions import Key
 
 
@@ -96,7 +97,7 @@ class DynamoStore:
             }
         )
 
-    @app.batchify(param_to_slice='documents', size=5)
+    @app.batchify(param_to_slice='documents', size=100)
     @app.func_time(logger=app.get_logger(__name__))
     def store_documents(self, documents: list):
         """
@@ -106,7 +107,8 @@ class DynamoStore:
             ERROR if failed, AppException if AWS Error: No access etc
         """
         ticks = [d['symbol'] for d in documents]
-        self.Logger.info(f'Writing batch of {ticks} into dynamodb')
+        size = getsizeof(documents)
+        self.Logger.info(f'Writing batch of {ticks} into dynamodb with size {size} bytes')
         with self.table.batch_writer() as batch:
             for r in documents:
                 self.Logger.debug(f'put into dynamodb {r}')
