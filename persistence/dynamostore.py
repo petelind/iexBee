@@ -132,10 +132,10 @@ class DynamoStore:
                 RequestItems={self.table_name: requests},
                 ReturnConsumedCapacity = 'INDEXES')
             
-            self.Logger.info(f'{response}')
+            self.Logger.debug(f'{response}')
             
             if response['UnprocessedItems']:
-                raise RuntimeError
+                raise RuntimeError('UnprocessedItems in batch write')
         except errors as ex:
             raise app.AppException(ex, f'dynamodb throughput exceed')
 
