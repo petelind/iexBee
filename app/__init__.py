@@ -63,6 +63,13 @@ class AppException(Exception):
 
 
 def get_logger(module_name: str, level: str = logging.INFO):
+
+    # This part deletes predefined AWS logging handler:
+    root_hndlr = logging.getLogger()
+    if root_hndlr.handlers:
+        for handler in root_hndlr.handlers:
+            root_hndlr.removeHandler(handler)
+
     logging.basicConfig(format='%(asctime)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s', datefmt='%d-%b-%y %H:%M:%S',
                         level=level)
     logger = logging.getLogger(module_name)
