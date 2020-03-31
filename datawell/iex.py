@@ -113,7 +113,8 @@ class Iex(object):
                 raise e
 
     @app.batchify(param_to_slice='datapoints', size=10)
-    @app.batchify(param_to_slice='symbols', size=400)
+    @app.batchify(param_to_slice='symbols', size=400,
+    multiprocess=True)
     @app.func_time(logger=app.get_logger(__name__))
     def get_symbols_batch(self, symbols: dict, datapoints: list):
         """

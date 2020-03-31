@@ -10,6 +10,7 @@ import decimal
 import json
 from collections.abc import MutableMapping
 from itertools import islice
+from concurrent.futures import ThreadPoolExecutor
 
 
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
@@ -111,8 +112,12 @@ def dict_cleanup(f):
         return remove_empty_strings(f(*args, **kwargs))
     return f_dict_cleanup
 
-def batchify(param_to_slice, size):
-    def split(data, size):
+def batchify(
+        param_to_slice: str, size: int,
+        multiprocess: bool = False,
+        workers: int = os.cpu_count()
+    ):
+    def split(data, size: int):
         if type(data) == dict:
             it = iter(data)
             for i in range(0, len(data), size):
@@ -121,21 +126,26 @@ def batchify(param_to_slice, size):
             for i in range(0, len(data), size):
                 yield data[i:i+size]
         else:
-            raise AppException(TypeError, message=f'Can not slice over {type(data)}')
+            message = f'Can not slice over {type(data)}'
+            raise AppException(TypeError, message)
 
     def deco_batchify(f):
         #@wraps(f)
         def f_batchify(*args, **kwargs):
             if param_to_slice not in kwargs:
-                raise AppException(message=f"Can not find param {param_to_slice} in kwargs", ex=Exception)
+                message = f"Can not find param {param_to_slice} in kwargs"
+                raise AppException(Exception, message)
             data = kwargs[param_to_slice]
-            for d in split(data,size):
-                kwargs[param_to_slice] = d
-                f(*args, **kwargs)
+            max_workes = workers if multiprocess else 1
+            with ThreadPoolExecutor(max_workers=max_workes) as executor:
+                for d in split(data,size):
+                    kwargs[param_to_slice] = d
+                    executor.submit(f ,*args, **kwargs)
         return f_batchify
     return deco_batchify
 
-def retry(exceptions, tries=4, delay=3, backoff=2, logger=None):
+def retry(exceptions, tries: int = 4, 
+        delay: int = 3, backoff: int = 2, logger=None):
     """
     Retry calling the decorated function using an exponential backoff.
 

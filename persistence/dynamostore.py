@@ -9,6 +9,7 @@ from boto3.dynamodb.conditions import Key
 class DynamoStore:
     def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol", log_level=logging.INFO):
         self.log_level = log_level
+        self.table_name = table_name
         self.Logger = app.get_logger(__name__, level=self.log_level)
         # Initialize both client and resource along with the class for usage in methods
         self.dynamo_client = boto3.client(
@@ -19,7 +20,7 @@ class DynamoStore:
             "dynamodb",
             region_name=app.REGION,
             endpoint_url=app.DYNAMO_URI)
-        self.table = self.dynamo_resource.Table(table_name)
+        self.table = self.dynamo_resource.Table(self.table_name)
         try:
             self.table.table_status in (
                 "CREATING", "UPDATING", "DELETING", "ACTIVE")
@@ -97,7 +98,13 @@ class DynamoStore:
             }
         )
 
-    @app.batchify(param_to_slice='documents', size=100)
+    @app.batchify(param_to_slice='documents', size=25,
+        multiprocess=True)
+    @app.retry(
+        app.AppException,
+        logger=app.get_logger(__name__),
+        backoff=1
+    )
     @app.func_time(logger=app.get_logger(__name__))
     def store_documents(self, documents: list):
         """
@@ -106,13 +113,32 @@ class DynamoStore:
         :return: ActionStatus with SUCCESS when stored successfully,
             ERROR if failed, AppException if AWS Error: No access etc
         """
+        requests = [
+            {'PutRequest': {'Item': Item}} 
+            for Item in documents
+        ]
         ticks = [d['symbol'] for d in documents]
-        size = getsizeof(documents)
-        self.Logger.info(f'Writing batch of {ticks} into dynamodb with size {size} bytes')
-        with self.table.batch_writer() as batch:
-            for r in documents:
-                self.Logger.debug(f'put into dynamodb {r}')
-                batch.put_item(Item=r)
+        size = getsizeof(requests)
+        exceptions = self.dynamo_client.exceptions
+        errors = (exceptions.ProvisionedThroughputExceededException)
+
+        self.Logger.info(
+            f'Writing batch of {ticks} into dynamodb '
+            f'with size {size} bytes'
+        )
+        
+        try:
+            response = self.dynamo_resource.batch_write_item(
+                RequestItems={self.table_name: requests},
+                ReturnConsumedCapacity = 'INDEXES')
+            
+            self.Logger.debug(f'{response}')
+            
+            if response['UnprocessedItems']:
+                raise RuntimeError('UnprocessedItems in batch write')
+        except errors as ex:
+            raise app.AppException(ex, f'dynamodb throughput exceed')
+
         return True
 
     @app.func_time(logger=app.get_logger(__name__))
