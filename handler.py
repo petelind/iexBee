@@ -20,4 +20,5 @@ def lambda_handler(event=None, context=None):
         os._exit(-1)  # please note: python has no encapsulation - you can call private methods! doesnt mean you should
 
 
-lambda_handler()
+if __name__ == "__main__":
+    lambda_handler()
