@@ -56,7 +56,9 @@ class Iex(object):
         The function is a local support function and it creates a list of 6 url encoded items.
         The list changes into url string with function urlunparse
         https://docs.python.org/3/library/urllib.parse.html#urllib.parse.urlunparse
-        return a list with 6 parts of url
+        return:
+         1) list with 6 parts of url
+         2) beautiful dict of URL components to use it in logs later
         """
         # a default uri parts aka 'bones'
         uri_bones_default = {
@@ -79,7 +81,8 @@ class Iex(object):
             parse.urlencode(uri_bones['query']),
             uri_bones['fragment']
         ]
-        return uri_skeleton
+        uri = parse.urlunparse(uri_skeleton)
+        return (uri, uri_bones)
 
     @app.func_time(logger=app.get_logger(__name__))
     def get_stocks(self):
@@ -116,9 +119,8 @@ class Iex(object):
         :return Dict() with the answer from the endpoint, Exception otherwise
         """
         try:
-            uri = parse.urlunparse(uri_skeleton)
-            self.Logger.info(f'Now retrieveing from {uri}')
-            response = requests.get(url=uri)
+            self.Logger.info(f'Now retrieveing from {uri_skeleton[1]}')
+            response = requests.get(url=uri_skeleton[0])
             response.raise_for_status()
             company_info = response.json(parse_float=Decimal)
             self.Logger.debug(f'Got response: {company_info}')
