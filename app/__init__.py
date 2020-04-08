@@ -2,6 +2,7 @@
 Contains core constants, datatypes etc. used application wise
 """
 import logging
+from pythonjsonlogger import jsonlogger
 import os
 from enum import Enum
 from functools import wraps
@@ -71,9 +72,24 @@ def get_logger(module_name: str, level: str = logging.INFO):
         for handler in root_hndlr.handlers:
             root_hndlr.removeHandler(handler)
 
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s', datefmt='%d-%b-%y %H:%M:%S',
-                        level=level)
     logger = logging.getLogger(module_name)
+
+    if not logger.handlers:
+        logger.setLevel(level)
+        logs_handler = logging.StreamHandler()
+        if os.getenv('JSON_LOGS', 'False') == "True":
+            formatter = jsonlogger.JsonFormatter(
+                fmt='%(asctime)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s',
+                datefmt='%d-%b-%y %H:%M:%S'
+            )
+        else:
+            formatter = logging.Formatter(
+                fmt='%(asctime)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s',
+                datefmt='%d-%b-%y %H:%M:%S'
+            )
+        logs_handler.setFormatter(formatter)
+        logger.addHandler(logs_handler)
+
     filename = os.getenv('LOG_FILE')
     if filename:
         handler = logging.FileHandler(filename)
@@ -81,6 +97,7 @@ def get_logger(module_name: str, level: str = logging.INFO):
                                        datefmt='%d-%b-%y %H:%M:%S')
         handler.setFormatter(log_format)
         logger.addHandler(handler)
+
     return logger
 
 
