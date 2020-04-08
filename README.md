@@ -27,3 +27,4 @@ TEST_ENVIRONMENT=True;
 2. In the end of the day - go through all commits of the day.
 3. If you see something that has to be changed (PEP violations, absense of docstrings, code smells, non-named non-typed parameters in methods) - go into comments for that commit and start a review, requesting a fix.
 4. If it looks ok - close the issue.
+5.
