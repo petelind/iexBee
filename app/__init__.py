@@ -229,7 +229,7 @@ def func_time(logger=None):
             finally:
                 end = int(round(time.time() * 1000)) - start
                 logger.info(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms",
-                            extra={"message_info": {"Type": "Time measure", "Function": func.name, "Execution time, ms": (end if end > 0 else 0)}})
+                            extra={"message_info": {"Type": "Time measure", "Function": func.__name__, "Execution time, ms": (end if end > 0 else 0)}})
         return time_measure
 
     return deco_func_time
