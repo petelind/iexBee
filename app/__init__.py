@@ -23,8 +23,12 @@ STOCKS = {}
 
 if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
+    ENVIRONMENT = "TEST"
+else:
+    ENVIRONMENT = "PROD"
 
 if os.getenv('TEST_STOCKS', 'False') == 'True':
+    DATASET = "Test data set"
     STOCKS = {
         'ALTM': {'symbol': 'ALTM', 'date': '2020-03-10'},
         'AVTR-A': {'symbol': 'AVTR-A', 'date': '2020-03-10'},
@@ -42,6 +46,8 @@ if os.getenv('TEST_STOCKS', 'False') == 'True':
         'NONE': {'symbol': 'NONE', 'date': '2020-03-10'},
         'ARNC#': {'symbol': 'ARNC#', 'date': '2020-03-10'}
     }
+else:
+    DATASET = "Whole data set"
 
 REGION = os.getenv('REGION')
 TABLE = os.getenv('TABLE', 'IexSnapshot')
@@ -64,6 +70,14 @@ class AppException(Exception):
         self.Message = message
 
 
+class CustomJsonFormatter(jsonlogger.JsonFormatter):
+    def add_fields(self, log_record, record, message_dict):
+        super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
+        log_record['Environment'] = ENVIRONMENT
+        log_record['Dataset'] = DATASET
+        log_record['LambdaId'] = os.getenv('AWS_RECORD_ID', 'Unknown')
+
+
 def get_logger(module_name: str, level: str = logging.INFO):
 
     # This part deletes predefined AWS logging handler:
@@ -78,8 +92,8 @@ def get_logger(module_name: str, level: str = logging.INFO):
         logger.setLevel(level)
         logs_handler = logging.StreamHandler()
         if os.getenv('JSON_LOGS', 'False') == "True":
-            formatter = jsonlogger.JsonFormatter(
-                fmt='%(asctime)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s',
+            formatter = CustomJsonFormatter(
+                fmt='%(asctime)s - %(Environment)s - %(Dataset)s - %(LambdaId)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s',
                 datefmt='%d-%b-%y %H:%M:%S'
             )
         else:
@@ -214,7 +228,8 @@ def func_time(logger=None):
                 return func(*args, **kwargs)
             finally:
                 end = int(round(time.time() * 1000)) - start
-                logger.info(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms")
+                logger.info(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms",
+                            extra={"message_info": {"Type": "Time measure", "Function": func.name, "Execution time, ms": (end if end > 0 else 0)}})
         return time_measure
 
     return deco_func_time

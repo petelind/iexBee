@@ -124,7 +124,8 @@ class DynamoStore:
 
         self.Logger.info(
             f'Writing batch of {ticks} into dynamodb '
-            f'with size {size} bytes'
+            f'with size {size} bytes',
+            extra={"message_info": {"Type": "DynamoDB write", "Tickers": ticks, "Size": size}}
         )
         
         try:
