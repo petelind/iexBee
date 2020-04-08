@@ -4,3 +4,4 @@ idna==2.8
 requests==2.22.0
 urllib3==1.25.8
 boto3==1.11.15
+python-json-logger

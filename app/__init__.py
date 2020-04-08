@@ -2,6 +2,7 @@
 Contains core constants, datatypes etc. used application wise
 """
 import logging
+from pythonjsonlogger import jsonlogger
 import os
 from enum import Enum
 from functools import wraps
@@ -22,8 +23,12 @@ STOCKS = {}
 
 if os.getenv('TEST_ENVIRONMENT') == 'True':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
+    ENVIRONMENT = "TEST"
+else:
+    ENVIRONMENT = "PROD"
 
 if os.getenv('TEST_STOCKS', 'False') == 'True':
+    DATASET = "Test data set"
     STOCKS = {
         'ALTM': {'symbol': 'ALTM', 'date': '2020-03-10'},
         'AVTR-A': {'symbol': 'AVTR-A', 'date': '2020-03-10'},
@@ -41,6 +46,8 @@ if os.getenv('TEST_STOCKS', 'False') == 'True':
         'NONE': {'symbol': 'NONE', 'date': '2020-03-10'},
         'ARNC#': {'symbol': 'ARNC#', 'date': '2020-03-10'}
     }
+else:
+    DATASET = "Whole data set"
 
 REGION = os.getenv('REGION')
 TABLE = os.getenv('TABLE', 'IexSnapshot')
@@ -63,6 +70,14 @@ class AppException(Exception):
         self.Message = message
 
 
+class CustomJsonFormatter(jsonlogger.JsonFormatter):
+    def add_fields(self, log_record, record, message_dict):
+        super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
+        log_record['Environment'] = ENVIRONMENT
+        log_record['Dataset'] = DATASET
+        log_record['LambdaId'] = os.getenv('AWS_RECORD_ID', 'Unknown')
+
+
 def get_logger(module_name: str, level: str = logging.INFO):
 
     # This part deletes predefined AWS logging handler:
@@ -71,9 +86,24 @@ def get_logger(module_name: str, level: str = logging.INFO):
         for handler in root_hndlr.handlers:
             root_hndlr.removeHandler(handler)
 
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s', datefmt='%d-%b-%y %H:%M:%S',
-                        level=level)
     logger = logging.getLogger(module_name)
+
+    if not logger.handlers:
+        logger.setLevel(level)
+        logs_handler = logging.StreamHandler()
+        if os.getenv('JSON_LOGS', 'False') == "True":
+            formatter = CustomJsonFormatter(
+                fmt='%(asctime)s - %(Environment)s - %(Dataset)s - %(LambdaId)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s',
+                datefmt='%d-%b-%y %H:%M:%S'
+            )
+        else:
+            formatter = logging.Formatter(
+                fmt='%(asctime)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s',
+                datefmt='%d-%b-%y %H:%M:%S'
+            )
+        logs_handler.setFormatter(formatter)
+        logger.addHandler(logs_handler)
+
     filename = os.getenv('LOG_FILE')
     if filename:
         handler = logging.FileHandler(filename)
@@ -81,6 +111,7 @@ def get_logger(module_name: str, level: str = logging.INFO):
                                        datefmt='%d-%b-%y %H:%M:%S')
         handler.setFormatter(log_format)
         logger.addHandler(handler)
+
     return logger
 
 
@@ -197,7 +228,8 @@ def func_time(logger=None):
                 return func(*args, **kwargs)
             finally:
                 end = int(round(time.time() * 1000)) - start
-                logger.info(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms")
+                logger.info(f"{func.__name__}: Total execution time: {end if end > 0 else 0} ms",
+                            extra={"message_info": {"Type": "Time measure", "Function": func.__name__, "Execution time, ms": (end if end > 0 else 0)}})
         return time_measure
 
     return deco_func_time
