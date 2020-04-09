@@ -41,7 +41,7 @@ class Iex(object):
         # a default uri parts aka 'bones'
         uri_bones_default = {
             "scheme": f"{app.BASE_API_URL.split('://')[0]}",
-            "netloc": f"{app.BASE_API_URL.split('://')[1]}",
+            "netloc": f"{app.BASE_API_URL.split('://')[1].strip('/')}",
             "path": "",
             "params": {},
             "query": {},

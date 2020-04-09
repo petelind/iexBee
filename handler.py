@@ -1,13 +1,17 @@
 import logging
 import os
+import secrets
 
 import app
 from datawell.iex import Iex
 from persistence.dynamostore import DynamoStore
 
+
 @app.func_time(logger=app.get_logger(module_name='handler.lambda_handler'))
 def lambda_handler(event=None, context=None):
-    os.environ["AWS_RECORD_ID"] = context.aws_request_id
+    os.environ["AWS_RECORD_ID"] = f"CONSOLE_{secrets.token_hex(nbytes=8)}"
+    if context:
+        os.environ["AWS_RECORD_ID"] = context.aws_request_id
     log_level = logging.INFO
     try:
 
