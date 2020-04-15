@@ -21,12 +21,6 @@ class DynamoStore:
             region_name=app.REGION,
             endpoint_url=app.DYNAMO_URI)
         self.table = self.dynamo_resource.Table(self.table_name)
-        try:
-            self.table.table_status in (
-                "CREATING", "UPDATING", "DELETING", "ACTIVE")
-        except self.dynamo_resource.meta.client.exceptions.ResourceNotFoundException:
-            self.Logger.info(f'Table {table_name} doesn\'t exist.')
-            self.create_table(table_name, part_key, sort_key)
 
     @app.func_time(logger=app.get_logger(__name__))
     def create_table(self, table_name, part_key: str, sort_key: str):

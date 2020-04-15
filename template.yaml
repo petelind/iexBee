@@ -1,0 +1,285 @@
+Parameters:
+  ApiTOKEN:
+    Type: String
+    Description: iexcloud api token
+  TestENVIRONMENT:
+    Type: String
+    Default: "False"
+    Description: iexcloud test environment toggle
+  TestSTOCKS:
+    Type: String
+    Default: "False"
+    Description: iexcloud test stocks environment toggle
+  JsonLOGS:
+    Type: String
+    Default: "True"
+    Description: iexcloud json logs environment toggle
+  AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3BucketED80291B:
+    Type: String
+    Description: S3 bucket for asset "93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5"
+  AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3VersionKey2E843573:
+    Type: String
+    Description: S3 key for asset version "93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5"
+  AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5ArtifactHash1EF671F2:
+    Type: String
+    Description: Artifact hash for asset "93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5"
+  AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3Bucket721C395F:
+    Type: String
+    Description: S3 bucket for asset "7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369"
+  AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3VersionKey0FCEAC6D:
+    Type: String
+    Description: S3 key for asset version "7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369"
+  AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369ArtifactHash09D91608:
+    Type: String
+    Description: Artifact hash for asset "7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369"
+Resources:
+  Dependencies1F4ECB40:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      Content:
+        S3Bucket:
+          Ref: AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3BucketED80291B
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3VersionKey2E843573
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3VersionKey2E843573
+      CompatibleRuntimes:
+        - python3.8
+      Description: ConsumingAPI dependecies
+    Metadata:
+      aws:cdk:path: LambdaCronExample/Dependencies/Resource
+      aws:asset:path: /c/Users/Nikolai_Riabinin/projects/ConsumingAPI/.build/reqs
+      aws:asset:property: Content
+  CDKIexSnapshot663B5855:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      KeySchema:
+        - AttributeName: symbol
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: symbol
+          AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TableName: CDKIexSnapshot
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: LambdaCronExample/CDKIexSnapshot/Resource
+  ConsumingApiServiceRoleC2B5F40A:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: LambdaCronExample/ConsumingApi/ServiceRole/Resource
+  ConsumingApiServiceRoleDefaultPolicy00FEDCC7:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:GetRecords
+              - dynamodb:GetShardIterator
+              - dynamodb:Query
+              - dynamodb:GetItem
+              - dynamodb:Scan
+              - dynamodb:BatchWriteItem
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:DeleteItem
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - CDKIexSnapshot663B5855
+                  - Arn
+              - Ref: AWS::NoValue
+        Version: "2012-10-17"
+      PolicyName: ConsumingApiServiceRoleDefaultPolicy00FEDCC7
+      Roles:
+        - Ref: ConsumingApiServiceRoleC2B5F40A
+    Metadata:
+      aws:cdk:path: LambdaCronExample/ConsumingApi/ServiceRole/DefaultPolicy/Resource
+  ConsumingApi48DC21C3:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Ref: AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3Bucket721C395F
+        S3Key:
+          Fn::Join:
+            - ""
+            - - Fn::Select:
+                  - 0
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3VersionKey0FCEAC6D
+              - Fn::Select:
+                  - 1
+                  - Fn::Split:
+                      - "||"
+                      - Ref: AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3VersionKey0FCEAC6D
+      Handler: handler.lambda_handler
+      Role:
+        Fn::GetAtt:
+          - ConsumingApiServiceRoleC2B5F40A
+          - Arn
+      Runtime: python3.8
+      Environment:
+        Variables:
+          API_TOKEN: LambdaCronExample/ApiTOKEN
+          JSON_LOGS: LambdaCronExample/JsonLOGS
+          TABLE:
+            Ref: CDKIexSnapshot663B5855
+          TEST_ENVIRONMENT: LambdaCronExample/TestENVIRONMENT
+          TEST_STOCKS: LambdaCronExample/TestSTOCKS
+      Layers:
+        - Ref: Dependencies1F4ECB40
+      Timeout: 300
+    DependsOn:
+      - ConsumingApiServiceRoleDefaultPolicy00FEDCC7
+      - ConsumingApiServiceRoleC2B5F40A
+    Metadata:
+      aws:cdk:path: LambdaCronExample/ConsumingApi/Resource
+      aws:asset:path: /c/Users/Nikolai_Riabinin/projects/ConsumingAPI/src
+      aws:asset:property: Code
+  ConsumingApiCurrentVersion1DA0C221093d12ee805b8b1d2f14d0a4123fe12f:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName:
+        Ref: ConsumingApi48DC21C3
+    Metadata:
+      aws:cdk:path: LambdaCronExample/ConsumingApi/CurrentVersion/Resource
+  ConsumingApiCurrentVersionAliasliveB25C0463:
+    Type: AWS::Lambda::Alias
+    Properties:
+      FunctionName:
+        Ref: ConsumingApi48DC21C3
+      FunctionVersion:
+        Fn::GetAtt:
+          - ConsumingApiCurrentVersion1DA0C221093d12ee805b8b1d2f14d0a4123fe12f
+          - Version
+      Name: live
+    Metadata:
+      aws:cdk:path: LambdaCronExample/ConsumingApi/CurrentVersion/Aliaslive/Resource
+  ConsumingApiAllowEventRuleLambdaCronExampleRule4981BEF897CF249F:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - ConsumingApi48DC21C3
+          - Arn
+      Principal: events.amazonaws.com
+      SourceArn:
+        Fn::GetAtt:
+          - Rule4C995B7F
+          - Arn
+    Metadata:
+      aws:cdk:path: LambdaCronExample/ConsumingApi/AllowEventRuleLambdaCronExampleRule4981BEF8
+  Rule4C995B7F:
+    Type: AWS::Events::Rule
+    Properties:
+      ScheduleExpression: cron(0 18 ? * MON-FRI *)
+      State: ENABLED
+      Targets:
+        - Arn:
+            Fn::GetAtt:
+              - ConsumingApi48DC21C3
+              - Arn
+          Id: Target0
+    Metadata:
+      aws:cdk:path: LambdaCronExample/Rule/Resource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Modules: aws-cdk=1.32.2,jsii-runtime=node.js/v12.1.0
+    Condition: CDKMetadataAvailable
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-2
+
