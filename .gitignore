@@ -1,6 +1,9 @@
 # Project exclude paths
 /venv/
 .python-version
+.aws-sam
+cdk.out
+.build
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -15,5 +18,3 @@ __pycache__/
 # logs and binary files
 *.log
 node_modules
-cdk.out
-.build

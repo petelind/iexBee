@@ -14,31 +14,31 @@ Parameters:
     Type: String
     Default: "True"
     Description: iexcloud json logs environment toggle
-  AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3BucketED80291B:
+  AssetParameters22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743S3Bucket964A96F6:
     Type: String
-    Description: S3 bucket for asset "93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5"
-  AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3VersionKey2E843573:
+    Description: S3 bucket for asset "22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743"
+  AssetParameters22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743S3VersionKey5E1CA1D9:
     Type: String
-    Description: S3 key for asset version "93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5"
-  AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5ArtifactHash1EF671F2:
+    Description: S3 key for asset version "22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743"
+  AssetParameters22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743ArtifactHashE8B2885B:
     Type: String
-    Description: Artifact hash for asset "93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5"
-  AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3Bucket721C395F:
+    Description: Artifact hash for asset "22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743"
+  AssetParametersc0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2S3Bucket9BCA7E99:
     Type: String
-    Description: S3 bucket for asset "7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369"
-  AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3VersionKey0FCEAC6D:
+    Description: S3 bucket for asset "c0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2"
+  AssetParametersc0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2S3VersionKeyA90AEDA5:
     Type: String
-    Description: S3 key for asset version "7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369"
-  AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369ArtifactHash09D91608:
+    Description: S3 key for asset version "c0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2"
+  AssetParametersc0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2ArtifactHashF9F6BECF:
     Type: String
-    Description: Artifact hash for asset "7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369"
+    Description: Artifact hash for asset "c0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2"
 Resources:
   Dependencies1F4ECB40:
     Type: AWS::Lambda::LayerVersion
     Properties:
       Content:
         S3Bucket:
-          Ref: AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3BucketED80291B
+          Ref: AssetParameters22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743S3Bucket964A96F6
         S3Key:
           Fn::Join:
             - ""
@@ -46,12 +46,12 @@ Resources:
                   - 0
                   - Fn::Split:
                       - "||"
-                      - Ref: AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3VersionKey2E843573
+                      - Ref: AssetParameters22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743S3VersionKey5E1CA1D9
               - Fn::Select:
                   - 1
                   - Fn::Split:
                       - "||"
-                      - Ref: AssetParameters93c353746c8921b4c4186a02bf620b02447ae24377f1af9a30dc9999f04be0c5S3VersionKey2E843573
+                      - Ref: AssetParameters22f007ec7a2d15eb1a9a39cb6ba26fa2844c9716861ca72255b38a6ea0a14743S3VersionKey5E1CA1D9
       CompatibleRuntimes:
         - python3.8
       Description: ConsumingAPI dependecies
@@ -127,7 +127,7 @@ Resources:
     Properties:
       Code:
         S3Bucket:
-          Ref: AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3Bucket721C395F
+          Ref: AssetParametersc0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2S3Bucket9BCA7E99
         S3Key:
           Fn::Join:
             - ""
@@ -135,12 +135,12 @@ Resources:
                   - 0
                   - Fn::Split:
                       - "||"
-                      - Ref: AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3VersionKey0FCEAC6D
+                      - Ref: AssetParametersc0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2S3VersionKeyA90AEDA5
               - Fn::Select:
                   - 1
                   - Fn::Split:
                       - "||"
-                      - Ref: AssetParameters7d9bc728b37568679ee0d106ada379783e241b8aa62a4c1db2fbdc9b3d29e369S3VersionKey0FCEAC6D
+                      - Ref: AssetParametersc0257ac0a826c4b0394bc5896e37a0fbb4f04f732248fc3671520872d31420d2S3VersionKeyA90AEDA5
       Handler: handler.lambda_handler
       Role:
         Fn::GetAtt:
@@ -165,7 +165,7 @@ Resources:
       aws:cdk:path: LambdaCronExample/ConsumingApi/Resource
       aws:asset:path: /c/Users/Nikolai_Riabinin/projects/ConsumingAPI/src
       aws:asset:property: Code
-  ConsumingApiCurrentVersion1DA0C221093d12ee805b8b1d2f14d0a4123fe12f:
+  ConsumingApiCurrentVersion1DA0C221a3ed02a8cfd4b505b1e09bcfaaf6a9f0:
     Type: AWS::Lambda::Version
     Properties:
       FunctionName:
@@ -179,7 +179,7 @@ Resources:
         Ref: ConsumingApi48DC21C3
       FunctionVersion:
         Fn::GetAtt:
-          - ConsumingApiCurrentVersion1DA0C221093d12ee805b8b1d2f14d0a4123fe12f
+          - ConsumingApiCurrentVersion1DA0C221a3ed02a8cfd4b505b1e09bcfaaf6a9f0
           - Version
       Name: live
     Metadata:
