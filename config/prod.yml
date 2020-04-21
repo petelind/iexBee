@@ -1,5 +1,5 @@
 env_vars:
-  API_TOKEN: Tsk_5bb058b14a9d499895d67589342fabbf
+  API_TOKEN: qweqweqwe
   JSON_LOGS: true
   TEST_ENVIRONMENT: false
   TEST_STOCKS: false
