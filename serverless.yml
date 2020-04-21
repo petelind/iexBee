@@ -15,10 +15,10 @@ functions:
   market-snap:
     handler: handler.lambda_handler
     environment:
-      API_TOKEN: ${self:custom.config.env_vars.API_TOKEN}
-      JSON_LOGS: ${self:custom.config.env_vars.JSON_LOGS}
-      TEST_ENVIRONMENT: ${self:custom.config.env_vars.TEST_ENVIRONMENT}
-      TEST_STOCKS: ${self:custom.config.env_vars.TEST_STOCKS}
+      API_TOKEN: ${self:custom.config.env_vars.API_TOKEN, self:custom.default_config.env_vars.API_TOKEN}
+      JSON_LOGS: ${self:custom.config.env_vars.JSON_LOGS, self:custom.default_config.env_vars.JSON_LOGS}
+      TEST_ENVIRONMENT: ${self:custom.config.env_vars.TEST_ENVIRONMENT, self:custom.default_config.env_vars.TEST_ENVIRONMENT}
+      TEST_STOCKS: ${self:custom.config.env_vars.TEST_STOCKS, self:custom.default_config.env_vars.TEST_STOCKS}
 
 package:
   exclude:
@@ -31,6 +31,7 @@ package:
     - local.env
 
 custom:
+  default_config: ${file(config/common.yml)}
   config: ${file(config/${opt:stage, self:provider.stage}.yml)}
   serverless-layers:
     compatibleRuntimes: 
@@ -62,8 +63,8 @@ resources:
             Projection:
               ProjectionType: ALL
             ProvisionedThroughput:
-              ReadCapacityUnits: ${self:custom.config.dynamodb.index_rcu}
-              WriteCapacityUnits: ${self:custom.config.dynamodb.index_wcu}
+              ReadCapacityUnits: ${self:custom.config.dynamodb.index_rcu, self:custom.default_config.dynamodb.index_rcu}
+              WriteCapacityUnits: ${self:custom.config.dynamodb.index_wcu, self:custom.default_config.dynamodb.index_wcu}
         ProvisionedThroughput:
-          ReadCapacityUnits: ${self:custom.config.dynamodb.rcu}
-          WriteCapacityUnits: ${self:custom.config.dynamodb.wcu}
+          ReadCapacityUnits: ${self:custom.config.dynamodb.rcu, self:custom.default_config.dynamodb.rcu}
+          WriteCapacityUnits: ${self:custom.config.dynamodb.wcu, self:custom.default_config.dynamodb.wcu}
