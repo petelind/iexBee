@@ -1,0 +1,10 @@
+env_vars:
+  API_TOKEN: qweqweqwe
+  JSON_LOGS: true
+  TEST_ENVIRONMENT: false
+  TEST_STOCKS: false
+dynamodb:
+  rcu: 5
+  wcu: 5
+  index_rcu: 5
+  index_wcu: 5
