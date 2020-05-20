@@ -14,7 +14,7 @@ pip install -R requirements.txt
 3. Set the following environment variables:
 API_TOKEN=pk_ABCDEF;
 TEST_ENVIRONMENT=True;
-4. Run docker container witl localstack dynomodb ```docker run -d -p 4567-4599:4567-4599 -p 8080:8080 -e SERVICES=dynamodb --name localstack localstack/localstack```
+4. Run docker container with localstack dynamodb ```docker run -d -p 4567-4599:4567-4599 -p 8080:8080 -e SERVICES=dynamodb --name localstack localstack/localstack```
 5. Run ```python handler.py```
 
 ## How do I contribute?
