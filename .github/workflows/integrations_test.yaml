@@ -34,5 +34,5 @@ jobs:
             --table-name $TABLE
       - name: sls deploy
         run: |
-          sls deploy --region $AWS_DEFAULT_REGION
+          sls deploy --region $AWS_DEFAULT_REGION --stage prod
         
