@@ -8,13 +8,13 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     container:
-      image: python:3.8-alpine
-    env: 
+      image: nikolaik/python-nodejs:python3.8-nodejs14-alpine
+    env:
       TEST_ENVIRONMENT: 'True'
       TEST_STOCKS: 'True'
       TABLE: 'TestIexSnapshot'
       LAMBDA_NAME: 'TestLambda' 
-      API_TOKEN: ${{ secrets.API_TOKEN_TEST }}
+      API_TOKEN: ${{ secrets.API_TOKEN_TEST }} 
       AWS_DEFAULT_REGION: us-east-1
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -25,14 +25,14 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install awscli
+          npm install -g serverless
+          sls plugin install --name serverless-layers
       - name: tests
         run: |
           python handler.py
           aws dynamodb delete-table \
             --table-name $TABLE
-      - name: zip package
-        uses: montudor/action-zip@v0.1.0
-        with:
-          args: zip -r iexbee.zip .
-      - name: deploy to lambda
-        run: aws lambda update-function-code --function-name $LAMBDA_NAME --zip-file fileb://iexbee.zip
+      - name: sls deploy
+        run: |
+          sls deploy --region $AWS_DEFAULT_REGION
+        
