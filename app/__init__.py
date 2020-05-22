@@ -9,13 +9,17 @@ from functools import wraps
 import time
 import decimal
 import json
+import boto3
 from collections.abc import MutableMapping
 from itertools import islice
 from concurrent.futures import ThreadPoolExecutor
 
-
+secret_mngr = boto3.client('secretsmanager')
+try:
+    API_TOKEN = secret_mngr.get_secret_value(SecretId=f'iextoken-{os.getenv("ENV")}')['SecretString']
+except:
+    API_TOKEN = os.getenv('API_TOKEN') 
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
-API_TOKEN = os.getenv('API_TOKEN')
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
 DYNAMO_URI = os.getenv('DYNAMO_URI', None)

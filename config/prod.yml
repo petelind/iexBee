@@ -1,5 +1,4 @@
 env_vars:
-  API_TOKEN: qweqweqwe
   JSON_LOGS: true
   TEST_ENVIRONMENT: false
   TEST_STOCKS: false
