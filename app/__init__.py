@@ -16,9 +16,9 @@ from concurrent.futures import ThreadPoolExecutor
 
 secret_mngr = boto3.client('secretsmanager')
 try:
-    API_TOKEN = secret_mngr.get_secret_value(SecretId=f'iextoken-{os.getenv("ENV")}')['SecretString']
-except:
     API_TOKEN = os.getenv('API_TOKEN') 
+except:
+    API_TOKEN = secret_mngr.get_secret_value(SecretId=f'iextoken-{os.getenv("ENV")}')['SecretString']
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
