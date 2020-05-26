@@ -51,7 +51,7 @@ else:
     DATASET = "Whole data set"
 
 REGION = os.getenv('REGION')
-TABLE = os.getenv('TABLE', 'IexSnapshot')
+TABLE = os.getenv('TABLE', f'IexSnapshot-{os.getenv("ENV")}')
 
 
 class ActionStatus(Enum):
