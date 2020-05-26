@@ -9,7 +9,7 @@ provider:
   stage: dev
   role: arn:aws:iam::449798490924:role/DynamoRoleForLambda
   deploymentBucket:
-    name: iexbee-serverless-deployment-${opt:stage, self:provider.stage}
+    name: iexbee-serverless-deployment
 
 functions:
   market-snap:
