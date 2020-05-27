@@ -4,6 +4,6 @@ env_vars:
   TEST_STOCKS: false
 dynamodb:
   rcu: 5
-  wcu: 5
+  wcu: 10
   index_rcu: 5
-  index_wcu: 5
+  index_wcu: 10

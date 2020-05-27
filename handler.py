@@ -13,6 +13,7 @@ def lambda_handler(event=None, context=None):
     if context:
         os.environ["AWS_RECORD_ID"] = context.aws_request_id
     log_level = logging.INFO
+    logger = app.get_logger(__name__, level=log_level)
     try:
 
         datasource = Iex(app.STOCKS, log_level=log_level)

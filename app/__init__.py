@@ -21,14 +21,12 @@ MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
 DYNAMO_URI = os.getenv('DYNAMO_URI', None)
 STOCKS = {}
+ENVIRONMENT = os.getenv('ENV')
 
-if os.getenv('TEST_ENVIRONMENT') == 'True':
+if os.getenv('TEST_ENVIRONMENT') == 'true':
     BASE_API_URL: str = 'https://sandbox.iexapis.com/stable/'
-    ENVIRONMENT = "TEST"
-else:
-    ENVIRONMENT = "PROD"
 
-if os.getenv('TEST_STOCKS', 'False') == 'True':
+if os.getenv('TEST_STOCKS', 'false') == 'true':
     DATASET = "Test data set"
     STOCKS = {
         'ALTM': {'symbol': 'ALTM', 'date': '2020-03-10'},
@@ -92,7 +90,7 @@ def get_logger(module_name: str, level: str = logging.INFO):
     if not logger.handlers:
         logger.setLevel(level)
         logs_handler = logging.StreamHandler()
-        if os.getenv('JSON_LOGS', 'False') == "True":
+        if os.getenv('JSON_LOGS', 'false') == "true":
             formatter = CustomJsonFormatter(
                 fmt='%(asctime)s - %(Environment)s - %(Dataset)s - %(LambdaId)s - %(name)s - %(process)d - [%(levelname)s] - %(message)s',
                 datefmt='%d-%b-%y %H:%M:%S'
