@@ -21,6 +21,7 @@ functions:
       JSON_LOGS: ${self:custom.config.env_vars.JSON_LOGS, self:custom.default_config.env_vars.JSON_LOGS}
       TEST_ENVIRONMENT: ${self:custom.config.env_vars.TEST_ENVIRONMENT, self:custom.default_config.env_vars.TEST_ENVIRONMENT}
       TEST_STOCKS: ${self:custom.config.env_vars.TEST_STOCKS, self:custom.default_config.env_vars.TEST_STOCKS}
+      STORAGE_TYPE: ${self:custom.default_config.storage_type}
 
 package:
   exclude:
@@ -41,9 +42,19 @@ custom:
       - python3.8
 
 resources:
+  Conditions:
+    IsDynamo:
+      Fn::Equals:
+        - ${opt:storage_type, self:custom.default_config.storage_type}
+        - dynamodb
+    IsS3:
+      Fn::Equals:
+        - ${opt:storage_type, self:custom.default_config.storage_type}
+        - s3
   Resources:
     DynamoDBTable:
       Type: AWS::DynamoDB::Table
+      Condition: IsDynamo
       Properties:
         TableName: IexSnapshot-${opt:stage, self:provider.stage}
         AttributeDefinitions:
@@ -71,3 +82,14 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.config.dynamodb.rcu, self:custom.default_config.dynamodb.rcu}
           WriteCapacityUnits: ${self:custom.config.dynamodb.wcu, self:custom.default_config.dynamodb.wcu}
+    S3Bucket:
+      Type: AWS::S3::Bucket
+      Condition: IsS3
+      Properties:
+        BucketName: iexsnapshot-${opt:stage, self:provider.stage}
+        AccessControl: Private
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
