@@ -21,18 +21,17 @@ functions:
       JSON_LOGS: ${self:custom.config.env_vars.JSON_LOGS, self:custom.default_config.env_vars.JSON_LOGS}
       TEST_ENVIRONMENT: ${self:custom.config.env_vars.TEST_ENVIRONMENT, self:custom.default_config.env_vars.TEST_ENVIRONMENT}
       TEST_STOCKS: ${self:custom.config.env_vars.TEST_STOCKS, self:custom.default_config.env_vars.TEST_STOCKS}
-      STORAGE_TYPE: ${self:custom.default_config.storage_type}
+      STORAGE_TYPE: ${opt:storage_type, self:custom.default_config.storage_type}
 
 package:
   exclude:
     - node_modules/**
     - config/**
-    - venv_linux/**
+    - venv/**
     - .vscode/**
     - .github/**
     - package-lock.json
     - local.env
-    - iexbee/**
 
 custom:
   default_config: ${file(config/common.yml)}
