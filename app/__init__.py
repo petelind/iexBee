@@ -19,6 +19,7 @@ API_TOKEN = os.getenv('API_TOKEN') or secret_mngr.get_secret_value(SecretId=f'ie
 BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
+S3_URI = os.getenv('S3_URI', None)
 DYNAMO_URI = os.getenv('DYNAMO_URI', None)
 STOCKS = {}
 ENVIRONMENT = os.getenv('ENV')
