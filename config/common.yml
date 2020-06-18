@@ -1,4 +1,4 @@
 storage_type: dynamodb
 lambda_config:
   timeout: 900
-  memory: 128
+  memory: 256

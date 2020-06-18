@@ -17,6 +17,8 @@ class S3Store:
             endpoint_url=app.S3_URI
         )
     
+    @app.batchify(param_to_slice='documents', size=25,
+        multiprocess=True)
     @app.func_time(logger=app.get_logger(__name__))
     def store_documents(self, documents: list):
         """
