@@ -1,4 +1,4 @@
-# ConsumingAPI
+# IexBee
 We will build up from the simple retriever to the retriever who can persist data, and then we will turn into a multithreaded lambda retriever.
 We will discover nasty surprises along the way and learn how to build in python, how to run python in AWS, and how to operate python.
 
@@ -18,8 +18,9 @@ TEST_ENVIRONMENT=True;
 5. Run ```python handler.py```
 
 ## How do I deploy to AWS with Serverless?
-Run ```sls deploy --region us-east-1``` (Defaults to dev env and dynamodb storage)
-To change deployment stage and storage type use cmd options e.g. ```--stage prod``` and ```--storage-type s3```
+Run ```sls deploy --region us-east-1``` (Defaults to dev env and dynamodb storage).
+To change deployment stage and storage type use cmd options e.g. ```--stage prod``` and ```--storage-type s3```  
+To remove stacks from AWS run ```sls remove --region us-east-1```
 ## How do I contribute?
 1. After each meetup @petelind publishes a portion of issues, one for everybody. Pick one, assign to yourself, so someone else would not cross-step you.
 2. We use trunk-based development (https://trunkbaseddevelopment.com/), so no pull request is necessary - just commit to the master. If you feel unsure - ask these weeks TC (see below) to review your code, or send an explicit PR setting him as a reviewer.
