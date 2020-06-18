@@ -17,6 +17,9 @@ TEST_ENVIRONMENT=True;
 4. Run docker container with localstack dynamodb ```docker run -d -p 4567-4599:4567-4599 -p 8080:8080 -e SERVICES=dynamodb --name localstack localstack/localstack```
 5. Run ```python handler.py```
 
+## How do I deploy to AWS with Serverless?
+Run ```sls deploy --region us-east-1``` (Defaults to dev env and dynamodb storage)
+To change deployment stage and storage type use cmd options e.g. ```--stage prod``` and ```--storage-type s3```
 ## How do I contribute?
 1. After each meetup @petelind publishes a portion of issues, one for everybody. Pick one, assign to yourself, so someone else would not cross-step you.
 2. We use trunk-based development (https://trunkbaseddevelopment.com/), so no pull request is necessary - just commit to the master. If you feel unsure - ask these weeks TC (see below) to review your code, or send an explicit PR setting him as a reviewer.
