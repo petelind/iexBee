@@ -4,9 +4,10 @@ import app
 import logging
 from sys import getsizeof
 from boto3.dynamodb.conditions import Key
+from persistence.basestore import BaseStore
 
 
-class DynamoStore:
+class DynamoStore(BaseStore):
     def __init__(self, table_name: str, part_key: str = "date", sort_key: str = "symbol", log_level=logging.INFO):
         self.log_level = log_level
         self.table_name = table_name

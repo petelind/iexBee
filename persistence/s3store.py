@@ -3,9 +3,9 @@ import logging
 import app
 from sys import getsizeof
 from pickle import dumps
+from persistence.basestore import BaseStore
 
-
-class S3Store:
+class S3Store(BaseStore):
     def __init__(self, bucket_name: str, log_level=logging.INFO):
         self.log_level = log_level
         self.bucket_name = bucket_name
@@ -44,3 +44,9 @@ class S3Store:
             raise app.AppException(ex, f'Failed to write data to s3!')
 
         return True
+
+    def get_filtered_documents():
+        return False
+    
+    def clean_table():
+        return False
