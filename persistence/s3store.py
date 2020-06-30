@@ -1,8 +1,9 @@
 import boto3
 import logging
 import app
+import datetime
 from sys import getsizeof
-from pickle import dumps
+from pickle import dumps, loads
 from persistence.basestore import BaseStore
 
 class S3Store(BaseStore):
@@ -37,7 +38,9 @@ class S3Store(BaseStore):
         
         try:
             for Item in documents:
-                object = self.s3_res.Object(self.bucket_name, f'{Item["date"]}/{Item["symbol"]}')
+                object = self.s3_res.Object(
+                    self.bucket_name, f'{Item["date"]}/{Item["symbol"]}'
+                )
                 object.put(Body=dumps(Item))
             
         except Exception as ex:
@@ -45,8 +48,33 @@ class S3Store(BaseStore):
 
         return True
 
-    def get_filtered_documents():
-        return False
-    
+    @app.func_time(logger=app.get_logger(__name__))
+    def get_filtered_documents(self, 
+            symbol_to_find: str = None, 
+            target_date: datetime.date = None
+        ):
+        appResults = app.Results()
+        if None in [symbol_to_find,target_date]:
+            raise app.AppException(
+                AssertionError,
+                "all parameters (symbol and date) are required"
+            )
+        reqitem = f'{target_date}/{symbol_to_find}'
+        try:
+            object = self.s3_res.Object(
+                self.bucket_name, reqitem
+            )
+            appResults.Results.append(object.get()['Body'].read())
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == "404":
+                self.Logger.warn(
+                    f"Requested Item {reqitem} does not exists"
+                )
+            else:
+                # Something else has gone wrong.
+                raise
+        return loads(object.get()['Body'].read())
+            
+
     def clean_table():
         return False

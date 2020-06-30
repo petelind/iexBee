@@ -55,6 +55,32 @@ class TestS3Store(TestCase):
         # ASSERT:
         self.assertDictEqual(get_it_back, serialized_doc, 'Stored document not equal')
 
+    def test_get_documents_WriteDocWithBoto3_ExpectReadedWithStore(self):
+        # ARRANGE
+        symbol_to_load = 'AAME'
+        date = '2020-02-11'
+        serialized_doc = app.remove_empty_strings(
+            self.read_fixture(
+                f'tests/fixtures/{symbol_to_load}.response.json'
+            )
+        )
+        self.assertFalse(self.item_exists(symbol_to_load, date),
+                         'Item should exist before the deletion')
+
+        # ACT:
+        object = s3_resource.Object(
+            bucket_name, f'{date}/{symbol_to_load}'
+        )
+        object.put(Body=dumps(serialized_doc))
+        get_it_back = s3store.get_filtered_documents(
+            symbol_to_load,
+            date
+        )
+
+        # ASSERT:
+        self.assertDictEqual(get_it_back, serialized_doc,
+                             'Stored document not equal')
+
     def item_exists(self, date: str, symbol: str):
         try:
             return loads(s3_resource.Object(bucket_name, f'{date}/{symbol}').get().read())
