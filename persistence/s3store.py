@@ -1,7 +1,7 @@
 import boto3
 import logging
 import app
-import datetime
+import botocore
 from sys import getsizeof
 from pickle import dumps, loads
 from persistence.basestore import BaseStore
@@ -12,6 +12,11 @@ class S3Store(BaseStore):
         self.bucket_name = bucket_name
         self.Logger = app.get_logger(__name__, level=self.log_level)
 
+        self.s3_client = boto3.client(
+            's3',
+            region_name=app.REGION,
+            endpoint_url=app.S3_URI
+        )
         self.s3_res = boto3.resource(
             's3',
             region_name=app.REGION,
@@ -51,20 +56,32 @@ class S3Store(BaseStore):
     @app.func_time(logger=app.get_logger(__name__))
     def get_filtered_documents(self, 
             symbol_to_find: str = None, 
-            target_date: datetime.date = None
+            target_date: str = ''
         ):
         appResults = app.Results()
-        if None in [symbol_to_find,target_date]:
-            raise app.AppException(
-                AssertionError,
-                "all parameters (symbol and date) are required"
-            )
+
+        paginator = self.s3_client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(
+            Bucket=self.bucket_name,
+            Prefix=target_date
+        )
+        content = []
         reqitem = f'{target_date}/{symbol_to_find}'
         try:
-            object = self.s3_res.Object(
-                self.bucket_name, reqitem
-            )
-            appResults.Results.append(object.get()['Body'].read())
+            # if we have more than 1000 keys need to paginate
+            [content.extend(page['Contents']) for page in pages]
+            for element in content:
+                # skip elements that not expected
+                if reqitem not in element['Key']:
+                    continue
+                object = self.s3_res.Object(
+                    self.bucket_name, element['Key']
+                )
+                self.Logger.info(f'retrieve {element["Key"]}')
+                appResults.Results.append(
+                    loads(object.get()['Body'].read())
+                )
+
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == "404":
                 self.Logger.warn(
@@ -73,7 +90,7 @@ class S3Store(BaseStore):
             else:
                 # Something else has gone wrong.
                 raise
-        return loads(object.get()['Body'].read())
+        return appResults
             
 
     def clean_table():

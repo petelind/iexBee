@@ -78,7 +78,9 @@ class TestS3Store(TestCase):
         )
 
         # ASSERT:
-        self.assertDictEqual(get_it_back, serialized_doc,
+        self.assertIsInstance(get_it_back, app.Results)
+        self.assertEqual(len(get_it_back.Results), 1)
+        self.assertDictEqual(get_it_back.Results[0], serialized_doc,
                              'Stored document not equal')
 
     def item_exists(self, date: str, symbol: str):
