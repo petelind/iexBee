@@ -74,6 +74,9 @@ class S3Store(BaseStore):
                 # skip elements that not expected
                 if reqitem not in element['Key']:
                     continue
+                if (symbol_to_find and
+                    not element['Key'].endswith(symbol_to_find)):
+                    continue
                 object = self.s3_res.Object(
                     self.bucket_name, element['Key']
                 )

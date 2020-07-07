@@ -78,10 +78,43 @@ class TestS3Store(TestCase):
         )
 
         # ASSERT:
-        self.assertIsInstance(get_it_back, app.Results)
-        self.assertEqual(len(get_it_back.Results), 1)
+        self.assertIsInstance(get_it_back, app.Results,
+                "function return not appResults object")
+        self.assertEqual(len(get_it_back.Results), 1,
+                "function return more than 1 element")
         self.assertDictEqual(get_it_back.Results[0], serialized_doc,
-                             'Stored document not equal')
+                'Stored document not equal')
+
+    def test_get_documents_WriteDocWithWrongSymbol_ExpectedNotReturned(self):
+        # ARRANGE
+        symbol_to_load = 'ALTM'
+        symbol_to_find = 'A'
+        date = '2020-02-11'
+        serialized_doc = app.remove_empty_strings(
+            self.read_fixture(
+                f'tests/fixtures/{symbol_to_load}.response.json'
+            )
+        )
+        self.assertFalse(self.item_exists(symbol_to_load, date),
+                         'Item should exist before the deletion')
+        self.assertFalse(self.item_exists(symbol_to_find, date),
+                         'Item should exist before the deletion')
+
+        # ACT:
+        object = s3_resource.Object(
+            bucket_name, f'{date}/{symbol_to_load}'
+        )
+        object.put(Body=dumps(serialized_doc))
+        get_it_back = s3store.get_filtered_documents(
+            symbol_to_find,
+            date
+        )
+
+        # ASSERT:
+        self.assertIsInstance(get_it_back, app.Results,
+                "function should return appResults object")
+        self.assertEqual(len(get_it_back.Results), 0,
+                "function should return empty results")
 
     def item_exists(self, date: str, symbol: str):
         try:
