@@ -20,6 +20,7 @@ BASE_API_URL: str = 'https://cloud.iexapis.com/v1/'
 MAX_RETRIEVAL_THREADS = 16
 MAX_PERSISTENCE_THREADS = 16
 S3_URI = os.getenv('S3_URI', None)
+SQS_URI = os.getenv('SQS_URI', None)
 DYNAMO_URI = os.getenv('DYNAMO_URI', None)
 STOCKS = {}
 ENVIRONMENT = os.getenv('ENV')
