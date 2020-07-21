@@ -34,12 +34,15 @@ class sqsStore(BaseStore):
             }
             for doc in documents
         ]
+        ids = [ e['Id'] for e in entries ]
+        self.Logger.info(f'Store {ids} in sqs')
+        self.Logger.debug(f'Saving {entries} in sqs {self.sqs_queue_url}')
         self.sqs_client.send_message_batch(
             QueueUrl=self.sqs_queue_url,
             Entries=entries
         )
         results.ActionStatus = 0
-        results.Results = [ e['Id'] for e in entries ]
+        results.Results = ids
         return results
 
     def get_filtered_documents():
