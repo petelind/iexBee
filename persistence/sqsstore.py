@@ -1,30 +1,46 @@
 import boto3
 import logging
 import app
+import json
+from uuid import uuid1
 from persistence.basestore import BaseStore
 
 class sqsStore(BaseStore):
 
-    def __init__(self, name: str, log_level=logging.INFO):
+    def __init__(self, name: str='sqsStore', log_level=logging.INFO):
         self.log_level = log_level
         self.Logger = app.get_logger(__name__, level=self.log_level)
-        self.sqs_resource = boto3.resource(
+        self.sqs_client = boto3.client(
             'sqs',
             region_name=app.REGION,
             endpoint_url=app.SQS_URI
         )
-        self.sqs_queue = self.sqs_resource.get_queue_by_name(
+        self.sqs_queue_url = self.sqs_client.get_queue_url(
             QueueName=name
-        )
+        )['QueueUrl']
 
-    def store_documents():
+    def store_documents(self, documents: list):
         """
         Persists list of dict()
         :param documents:
         :return: ActionStatus with SUCCESS when stored successfully,
             ERROR if failed, AppException if AWS Error: No access etc
         """
-        pass
+        results = app.Results()
+        entries = [
+            { 
+                'Id': str(uuid1()),
+                'MessageBody': json.dumps(doc)
+            }
+            for doc in documents
+        ]
+        self.sqs_client.send_message_batch(
+            QueueUrl=self.sqs_queue_url,
+            Entries=entries
+        )
+        results.ActionStatus = 0
+        results.Results = [ e['Id'] for e in entries ]
+        return results
 
     def get_filtered_documents():
         """
