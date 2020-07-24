@@ -11,10 +11,9 @@ jobs:
       localstack:
         image: localstack/localstack:0.10.7
         ports:
-          - 4569:4569
-          - 4572:4572
+          - 4567-4599:4567-4599
         env:
-          SERVICES: dynamodb,s3
+          SERVICES: dynamodb,s3,sqs
     steps:
       - name: Checkout branch
         uses: actions/checkout@master
@@ -29,6 +28,7 @@ jobs:
         env: 
           DYNAMO_URI: http://localstack:4569
           S3_URI: http://localstack:4572
+          SQS_URI: http://localstack:4576
           AWS_DEFAULT_REGION: us-east-1
           AWS_ACCESS_KEY_ID: foo
           AWS_SECRET_ACCESS_KEY: bar
