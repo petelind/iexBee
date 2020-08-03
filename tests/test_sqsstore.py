@@ -6,6 +6,7 @@ from unittest.mock import patch
 from persistence.sqsstore import sqsStore
 import boto3
 import app
+from uuid import uuid1
 
 name = 'CompaniesSQSIntegrationTesting'
 sqs_client = boto3.client('sqs', endpoint_url=app.SQS_URI)
@@ -55,6 +56,37 @@ class TestSQSStore(TestCase):
         )
         self.assertDictEqual(
             json.loads(get_it_back['Messages'][0]['Body']), 
+            serialized_doc, 'Stored document not equal'
+        )
+
+    def test_get_AEBfixture(self):
+        # ARRANGE
+        symbol_to_load = 'AEB'
+        date = '2020-02-11'
+        serialized_doc = app.remove_empty_strings(
+            self.read_fixture(
+                f'tests/fixtures/{symbol_to_load}.response.json'
+            )
+        )
+
+        # ACT:
+        test_message_body = json.dumps(serialized_doc)
+        store_object = sqs_client.send_message(
+            QueueUrl=sqs_queue_url,
+            MessageBody=test_message_body
+        )
+        get_object = sqs_store.get_filtered_documents(numberOfMessages=1)
+
+        # ASSERT:
+        self.assertIsInstance(
+            get_object, app.Results, 
+            'Store function should return appResults object'
+        )
+        self.assertEqual(get_object.ActionStatus, 0,
+            'Store function should return Success ActionStatus'
+        )
+        self.assertDictEqual(
+            get_object.Results[0], 
             serialized_doc, 'Stored document not equal'
         )
 

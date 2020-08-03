@@ -45,7 +45,7 @@ class sqsStore(BaseStore):
         results.Results = ids
         return results
 
-    def get_filtered_documents():
+    def get_filtered_documents(self, numberOfMessages: int):
         """
         Returns a list of documents matching given ticker and/or date
         :param symbol_to_find: ticker as a string
@@ -54,10 +54,28 @@ class sqsStore(BaseStore):
         :return: a list of dicts() each containing data available for a stock
             for a given period of time
         """
-        pass
+        sqs_messages = []
+        results = app.Results()
+        try:
+            self.Logger.info(f'Get {numberOfMessages} of messages from sqs')
+            self.Logger.debug(f'Getting {numberOfMessages} of messages from sqs {self.sqs_queue_url}')
+            get_documents = self.sqs_client.receive_message(
+                QueueUrl=self.sqs_queue_url,
+                MaxNumberOfMessages=numberOfMessages
+            )
+            [sqs_messages.append(json.loads(message['Body'])) for message in get_documents['Messages']]
+            results.Results = sqs_messages
+            results.ActionStatus = 0
+        except Exception as e:
+            results.ActionStatus = -1
+            self.Logger.info(f"An issue occured during the process of getting messages from sqs.")
+            self.Logger.debug(f'An issue occured during the process of getting messages from sqs. Message {e}')
+        return results
+        
 
-    def clean_table():
+    def clean_table(self):
         """
         Use this one to either clean specific stocks from the db or delete the table if symbols_to_remove is empty.
         :param symbols_to_remove: list of dicts each containing 'symbol' string
         """
+        return False
